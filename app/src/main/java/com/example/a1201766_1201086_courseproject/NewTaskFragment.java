@@ -20,6 +20,7 @@ public class NewTaskFragment extends Fragment {
     private Spinner prioritySpinner;
     private CheckBox completionStatusCheckbox;
     private Button saveTaskButton, deleteTaskButton, reminderButton;
+    private TaskDatabaseHelper taskDatabaseHelper;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -35,6 +36,8 @@ public class NewTaskFragment extends Fragment {
         saveTaskButton = view.findViewById(R.id.saveTaskButton);
         deleteTaskButton = view.findViewById(R.id.deleteTaskButton);
         reminderButton = view.findViewById(R.id.reminderButton);
+
+        taskDatabaseHelper = new TaskDatabaseHelper(getContext());
 
         dueDateField.setOnClickListener(v -> showDatePickerDialog());
         dueTimeField.setOnClickListener(v -> showTimePickerDialog());
@@ -62,17 +65,34 @@ public class NewTaskFragment extends Fragment {
     }
 
     private void saveTask() {
-        // Implement saving logic here, potentially involving a database
-        Toast.makeText(getContext(), "Task saved!", Toast.LENGTH_SHORT).show();
+        String title = taskTitleField.getText().toString();
+        String description = taskDescriptionField.getText().toString();
+        String dueDate = dueDateField.getText().toString();
+        String dueTime = dueTimeField.getText().toString();
+        String priority = prioritySpinner.getSelectedItem() != null ? prioritySpinner.getSelectedItem().toString() : "";
+        String status = completionStatusCheckbox.isChecked() ? "completed" : "pending";
+        String reminder = "reminder"; // Placeholder for reminder logic
+
+        if (title.isEmpty() || description.isEmpty() || dueDate.isEmpty() || dueTime.isEmpty() || priority.isEmpty()) {
+            Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        boolean isInserted = taskDatabaseHelper.insertTask(title, description, dueDate + " " + dueTime, priority, status, reminder);
+        if (isInserted) {
+            Toast.makeText(getContext(), "Task saved successfully", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getContext(), "Failed to save task", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void deleteTask() {
-        // Implement delete logic here
-        Toast.makeText(getContext(), "Task deleted!", Toast.LENGTH_SHORT).show();
+        // Placeholder: actual implementation will require task identification
+        Toast.makeText(getContext(), "Delete feature not implemented", Toast.LENGTH_SHORT).show();
     }
 
     private void setReminder() {
-        // Implement reminder setting logic here
-        Toast.makeText(getContext(), "Reminder set!", Toast.LENGTH_SHORT).show();
+        // Placeholder: actual implementation will need integration with notification system
+        Toast.makeText(getContext(), "Reminder feature not implemented", Toast.LENGTH_SHORT).show();
     }
 }
