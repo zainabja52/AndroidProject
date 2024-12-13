@@ -95,9 +95,21 @@ public class HomeActivity extends AppCompatActivity {
 
     // Logout logic
     private void logout() {
-        // Clear user data or preferences
+
         SharedPreferences preferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
+
+        boolean rememberMe = preferences.getBoolean("rememberMe", false);
+
+        if (!rememberMe) {
+            editor.remove("email");
+        }
+
+        editor.apply();
+
+
+
+        // Clear user data or preferences
         editor.clear();
         editor.apply();
 
