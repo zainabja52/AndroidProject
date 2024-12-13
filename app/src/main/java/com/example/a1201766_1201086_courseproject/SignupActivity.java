@@ -87,6 +87,7 @@ public class SignupActivity extends AppCompatActivity {
             confirmPasswordField.setError("Passwords do not match");
             return false;
         }
+
         return true;
     }
 

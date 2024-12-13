@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences preferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
         emailField.setText(preferences.getString("email", ""));
 
+
         signInButton.setOnClickListener(view -> {
             String email = emailField.getText().toString();
             String password = passwordField.getText().toString();

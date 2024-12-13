@@ -106,6 +106,7 @@ public class HomeActivity extends AppCompatActivity {
 
         editor.apply();
 
+
         // Redirect to MainActivity
         Intent intent = new Intent(HomeActivity.this, MainActivity.class);
         startActivity(intent);
