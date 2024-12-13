@@ -95,6 +95,7 @@ public class HomeActivity extends AppCompatActivity {
 
     // Logout logic
     private void logout() {
+
         SharedPreferences preferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
 
@@ -106,6 +107,11 @@ public class HomeActivity extends AppCompatActivity {
 
         editor.apply();
 
+
+
+        // Clear user data or preferences
+        editor.clear();
+        editor.apply();
 
         // Redirect to MainActivity
         Intent intent = new Intent(HomeActivity.this, MainActivity.class);

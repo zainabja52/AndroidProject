@@ -1,7 +1,9 @@
 package com.example.a1201766_1201086_courseproject;
 
+
 import android.content.Intent;
 import android.content.SharedPreferences;
+
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -50,6 +52,7 @@ public class SignupActivity extends AppCompatActivity {
 
             if (validateInputs(email, firstName, lastName, password, confirmPassword)) {
                 if (dbHelper.insertUser(email, firstName, lastName, password)) {
+
                     SharedPreferences preferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
                     SharedPreferences.Editor editor = preferences.edit();
                     editor.clear();
@@ -58,6 +61,8 @@ public class SignupActivity extends AppCompatActivity {
                     Toast.makeText(SignupActivity.this, "Registration Successful!", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(SignupActivity.this, MainActivity.class);
                     startActivity(intent);
+                    Toast.makeText(SignupActivity.this, "Registration Successful!", Toast.LENGTH_SHORT).show();
+
                     finish();
                 } else {
                     Toast.makeText(SignupActivity.this, "Registration Failed!", Toast.LENGTH_SHORT).show();
@@ -87,7 +92,6 @@ public class SignupActivity extends AppCompatActivity {
             confirmPasswordField.setError("Passwords do not match");
             return false;
         }
-
         return true;
     }
 
