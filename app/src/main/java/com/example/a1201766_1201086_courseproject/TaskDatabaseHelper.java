@@ -31,7 +31,8 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
                 COL_DUE_DATE + " TEXT, " +
                 COL_PRIORITY + " TEXT, " +
                 COL_STATUS + " TEXT, " +
-                COL_REMINDER + " TEXT)";
+                COL_REMINDER + " TEXT," +
+                "UNIQUE(" + COL_TITLE + ", " + COL_DUE_DATE + "))";
         db.execSQL(createTable);
     }
 
@@ -50,8 +51,13 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_PRIORITY, priority);
         values.put(COL_STATUS, status);
         values.put(COL_REMINDER, reminder);
-        long result = db.insert(TABLE_NAME, null, values);
-        return result != -1;
+
+        try {
+            long result = db.insertOrThrow(TABLE_NAME, null, values);
+            return result != -1;
+        } catch (Exception e) {
+            return false; // Task already exists
+        }
     }
 
     public Cursor getAllTasks() {
@@ -87,5 +93,36 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
         int result = db.delete(TABLE_NAME, COL_ID + "=?", new String[]{String.valueOf(id)});
         return result > 0;
     }
+
+    public boolean deleteTaskById(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        int result = db.delete(TABLE_NAME, COL_ID + "=?", new String[]{String.valueOf(id)});
+        return result > 0;
+    }
+
+    public boolean deleteTaskByTitleAndDate(String title, String dueDate) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        int result = db.delete(TABLE_NAME, COL_TITLE + "=? AND " + COL_DUE_DATE + "=?", new String[]{title, dueDate});
+        return result > 0;
+    }
+
+
+    public Cursor getTaskByTitleAndDate(String title, String dueDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " +
+                COL_TITLE + " = ? AND " + COL_DUE_DATE + " = ?", new String[]{title, dueDate});
+    }
+
+    public Cursor getAllTasksGroupedByDate() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT id, title, description, due_date, priority, status, reminder FROM " + TABLE_NAME + " ORDER BY due_date ASC", null);
+    }
+
+    public Cursor getCompletedTasksGroupedByDate() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM tasks WHERE status = 'completed' ORDER BY due_date ASC", null);
+    }
+
+
 }
 

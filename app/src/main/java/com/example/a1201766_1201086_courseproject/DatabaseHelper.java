@@ -54,4 +54,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         return exists;
     }
+    public boolean updateUserProfile(String oldEmail, String newEmail, String newPassword) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_EMAIL, newEmail);
+        values.put(COL_PASSWORD, newPassword);
+
+        int result = db.update(TABLE_NAME, values, COL_EMAIL + "=?", new String[]{oldEmail});
+        return result > 0;
+    }
+
+    public Cursor getUserDetails(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + COL_EMAIL + "=?", new String[]{email});
+    }
+
 }

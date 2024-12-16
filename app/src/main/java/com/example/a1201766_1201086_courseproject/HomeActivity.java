@@ -27,8 +27,7 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        // Retrieve the email passed from MainActivity
-        userEmail = getIntentEmail(); // Store the email in userEmail for later use if needed
+        userEmail = getIntentEmail();
 
         // Initialize DrawerLayout and NavigationView
         drawerLayout = findViewById(R.id.drawerLayout);
@@ -63,8 +62,13 @@ public class HomeActivity extends AppCompatActivity {
                     loadFragment(new SearchFragment());
                     break;
                 case R.id.nav_profile:
-                    loadFragment(new ProfileFragment());
+                    ProfileFragment profileFragment = new ProfileFragment();
+                    Bundle args = new Bundle();
+                    args.putString("email", userEmail); // Pass the email of the logged-in user
+                    profileFragment.setArguments(args);
+                    loadFragment(profileFragment);
                     break;
+
                 case R.id.nav_logout:
                     logout();
                     break;

@@ -50,13 +50,13 @@ public class MainActivity extends AppCompatActivity {
             if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
                 Toast.makeText(MainActivity.this, "Please enter all fields!", Toast.LENGTH_SHORT).show();
             } else if (dbHelper.checkUser(email, password)) {
-                    SharedPreferences.Editor editor = preferences.edit();
+                SharedPreferences.Editor editor = preferences.edit();
 
-                    if (rememberMeCheckBox.isChecked()) {
-                        editor.putString("email", email);
-                        editor.putBoolean("rememberMe", true);
-                    }
-                    editor.apply();
+                if (rememberMeCheckBox.isChecked()) {
+                    editor.putString("email", email);
+                    editor.putBoolean("rememberMe", true);
+                }
+                editor.apply();
                 Intent intent = new Intent(MainActivity.this, HomeActivity.class);
                 intent.putExtra("email", email); // Pass the email to HomeActivity
                 startActivity(intent);
