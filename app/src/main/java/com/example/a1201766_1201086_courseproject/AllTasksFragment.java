@@ -7,58 +7,63 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.database.Cursor;
+import androidx.annotation.NonNull;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link AllTasksFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class AllTasksFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private TaskDatabaseHelper taskDatabaseHelper;
+    private RecyclerView recyclerView;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public AllTasksFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AllTasksFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static AllTasksFragment newInstance(String param1, String param2) {
-        AllTasksFragment fragment = new AllTasksFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_all_tasks, container, false);
+
+        taskDatabaseHelper = new TaskDatabaseHelper(getContext());
+        recyclerView = view.findViewById(R.id.recyclerViewAllTasks);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        loadTasks();
+
+        return view;
+    }
+
+    private void loadTasks() {
+        Cursor cursor = taskDatabaseHelper.getAllTasksGroupedByDate();
+
+        Map<String, List<Task>> groupedTasks = new HashMap<>();
+        while (cursor.moveToNext()) {
+            String dueDate = cursor.getString(cursor.getColumnIndexOrThrow("due_date"));
+            Task task = new Task(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("id")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("title")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("description")),
+                    dueDate,
+                    cursor.getString(cursor.getColumnIndexOrThrow("priority")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("status")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("reminder"))
+            );
+
+            // Group tasks by due date
+            groupedTasks.putIfAbsent(dueDate, new ArrayList<>());
+            groupedTasks.get(dueDate).add(task);
         }
+        cursor.close();
+
+        // Sort date keys for consistent display order
+        List<String> dateKeys = new ArrayList<>(groupedTasks.keySet());
+        dateKeys.sort(String::compareTo); // Sort dates chronologically
+
+        recyclerView.setAdapter(new TaskAdapter(groupedTasks, dateKeys));
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_all_tasks, container, false);
-    }
 }

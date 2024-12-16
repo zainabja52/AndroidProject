@@ -84,6 +84,7 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/custom_edittext"
                 android:padding="10dp"
+                android:entries="@array/priority_options"
                />
 
             <CheckBox
@@ -101,7 +102,9 @@
                 android:layout_marginTop="16dp"
                 android:backgroundTint="@color/button_color"
                 android:text="Set Reminder"
-                android:textColor="@color/button_text_color" />
+                android:textColor="@color/button_text_color"
+                android:drawableLeft="@drawable/ic_reminder"
+                android:drawablePadding="8dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -117,7 +120,10 @@
                     android:layout_marginEnd="8dp"
                     android:backgroundTint="@color/button_color"
                     android:text="Save"
-                    android:textColor="@color/button_text_color" />
+                    android:textColor="@color/button_text_color"
+                    android:drawableLeft="@drawable/ic_save"
+                    android:drawablePadding="5dp"
+                    android:gravity="center_vertical"/>
 
                 <Button
                     android:id="@+id/deleteTaskButton"
@@ -126,7 +132,9 @@
                     android:layout_marginStart="8dp"
                     android:backgroundTint="@color/button_color"
                     android:text="Delete"
-                    android:textColor="@color/button_text_color" />
+                    android:textColor="@color/button_text_color"
+                    android:drawableLeft="@drawable/ic_delete"
+                    android:drawablePadding="5dp"/>
             </LinearLayout>
 
         </LinearLayout>
