@@ -1,5 +1,7 @@
 package com.example.a1201766_1201086_courseproject;
 
+import android.app.DatePickerDialog;
+import android.database.Cursor;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -7,58 +9,136 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link SearchFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import android.widget.ArrayAdapter;
+
 public class SearchFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private TextView startDateField, endDateField, searchKeywordField;
+    private Button searchButton, clearButton;
+    private ListView searchResultsListView;
+    private TaskDatabaseHelper taskDatabaseHelper;
+    private Calendar calendar;
 
     public SearchFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment SearchFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static SearchFragment newInstance(String param1, String param2) {
-        SearchFragment fragment = new SearchFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_search, container, false);
+
+        // Initialize views
+        startDateField = view.findViewById(R.id.startDateField);
+        endDateField = view.findViewById(R.id.endDateField);
+        searchKeywordField = view.findViewById(R.id.searchKeywordField);
+        searchButton = view.findViewById(R.id.searchButton);
+        clearButton = view.findViewById(R.id.clearButton);
+        searchResultsListView = view.findViewById(R.id.searchResultsListView);
+        taskDatabaseHelper = new TaskDatabaseHelper(getContext());
+        calendar = Calendar.getInstance();
+
+        // Set up date pickers
+        startDateField.setOnClickListener(v -> showDatePickerDialog(startDateField));
+        endDateField.setOnClickListener(v -> showDatePickerDialog(endDateField));
+
+        // Set up buttons
+        searchButton.setOnClickListener(v -> performSearch());
+        clearButton.setOnClickListener(v -> clearSearch());
+
+        return view;
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+    private void showDatePickerDialog(TextView dateField) {
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        new DatePickerDialog(getContext(), (DatePicker view, int selectedYear, int selectedMonth, int selectedDay) -> {
+            String date = String.format("%d-%02d-%02d", selectedYear, selectedMonth + 1, selectedDay);
+            dateField.setText(date);
+        }, year, month, day).show();
+    }
+
+    private void performSearch() {
+        String startDate = startDateField.getText().toString();
+        String endDate = endDateField.getText().toString();
+        String keyword = searchKeywordField.getText().toString().trim();
+
+        // Check if all filters are empty
+        if (startDate.isEmpty() && endDate.isEmpty() && keyword.isEmpty()) {
+            Toast.makeText(getContext(), "Please select at least one filter or keyword", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Build the dynamic SQL query
+        StringBuilder queryBuilder = new StringBuilder("SELECT * FROM tasks WHERE 1=1");
+        List<String> queryArgs = new ArrayList<>();
+
+        // Add Start Date condition
+        if (!startDate.isEmpty()) {
+            queryBuilder.append(" AND due_date >= ?");
+            queryArgs.add(startDate);
+        }
+
+        // Add End Date condition
+        if (!endDate.isEmpty()) {
+            queryBuilder.append(" AND due_date <= ?");
+            queryArgs.add(endDate);
+        }
+
+        // Add Keyword condition
+        if (!keyword.isEmpty()) {
+            queryBuilder.append(" AND (title LIKE ? OR description LIKE ?)");
+            queryArgs.add("%" + keyword + "%"); // Wildcards for partial matching
+            queryArgs.add("%" + keyword + "%");
+        }
+
+        // Execute the query
+        Cursor cursor = taskDatabaseHelper.getReadableDatabase().rawQuery(
+                queryBuilder.toString(),
+                queryArgs.toArray(new String[0])
+        );
+
+        // Process the results
+        List<String> tasks = new ArrayList<>();
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String title = cursor.getString(cursor.getColumnIndexOrThrow("title"));
+                String description = cursor.getString(cursor.getColumnIndexOrThrow("description"));
+                String dueDate = cursor.getString(cursor.getColumnIndexOrThrow("due_date"));
+                tasks.add("Title: " + title + "\nDescription: " + description + "\nDue: " + dueDate);
+            }
+            cursor.close();
+        }
+
+        // Display the results
+        if (!tasks.isEmpty()) {
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, tasks);
+            searchResultsListView.setAdapter(adapter);
+            searchResultsListView.setVisibility(View.VISIBLE);
+        } else {
+            Toast.makeText(getContext(), "No tasks match your search criteria", Toast.LENGTH_SHORT).show();
+            searchResultsListView.setAdapter(null);
+            searchResultsListView.setVisibility(View.GONE);
         }
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_search, container, false);
+
+    private void clearSearch() {
+        startDateField.setText("");
+        endDateField.setText("");
+        searchKeywordField.setText("");
+        searchResultsListView.setAdapter(null);
+        searchResultsListView.setVisibility(View.GONE);
     }
 }

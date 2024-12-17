@@ -1,6 +1,8 @@
 package com.example.a1201766_1201086_courseproject;
 
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -26,7 +28,6 @@ public class ProfileFragment extends Fragment {
     private String currentUserEmail;
     private boolean isEmailBeingEdited = false;
 
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -42,24 +43,36 @@ public class ProfileFragment extends Fragment {
 
         databaseHelper = new DatabaseHelper(getContext());
 
-        Bundle args = getArguments();
-        if (args != null) {
-            currentUserEmail = args.getString("email");
+        // Load email from SharedPreferences or Arguments
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        currentUserEmail = sharedPreferences.getString("currentUserEmail", null);
+
+        if (currentUserEmail == null) {
+            // Fallback: Load from Arguments
+            Bundle args = getArguments();
+            if (args != null) {
+                currentUserEmail = args.getString("email");
+            }
         }
+
         if (currentUserEmail == null) {
             Toast.makeText(getContext(), "No user email found. Please log in again.", Toast.LENGTH_SHORT).show();
             return view;
         }
 
+        // Load user data from the database
         loadUserProfile();
 
+        // Edit email functionality
         editEmailIcon.setOnClickListener(v -> {
             isEmailBeingEdited = true;
             emailField.setEnabled(true);
         });
 
+        // Create new password functionality
         createNewPasswordButton.setOnClickListener(v -> showCreateNewPasswordDialog());
 
+        // Save profile changes
         saveProfileButton.setOnClickListener(v -> {
             if (isEmailBeingEdited) {
                 showEmailConfirmationDialog();
@@ -67,6 +80,7 @@ public class ProfileFragment extends Fragment {
                 Toast.makeText(getContext(), "No changes to save.", Toast.LENGTH_SHORT).show();
             }
         });
+
         return view;
     }
 
@@ -77,7 +91,7 @@ public class ProfileFragment extends Fragment {
             firstNameField.setText(cursor.getString(cursor.getColumnIndexOrThrow("first_name")));
             lastNameField.setText(cursor.getString(cursor.getColumnIndexOrThrow("last_name")));
             emailField.setText(cursor.getString(cursor.getColumnIndexOrThrow("email")));
-            currentUserEmail = emailField.getText().toString().trim();
+            emailField.setEnabled(false);
             cursor.close();
         } else {
             Toast.makeText(getContext(), "Failed to load profile", Toast.LENGTH_SHORT).show();
@@ -94,25 +108,8 @@ public class ProfileFragment extends Fragment {
 
         EditText currentPasswordField = dialogView.findViewById(R.id.currentPasswordField);
 
-        builder.setPositiveButton("Confirm", (dialog, which) -> {
-            String currentPassword = currentPasswordField.getText().toString().trim();
-
-            if (TextUtils.isEmpty(currentPassword)) {
-                Toast.makeText(getContext(), "Current password is required", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (!databaseHelper.checkUser(currentUserEmail, currentPassword)) {
-                Toast.makeText(getContext(), "Incorrect current password", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            saveUserProfile(currentPassword, null); // Update email only
-            isEmailBeingEdited = false; // Reset email editing flag
-        });
-
+        builder.setPositiveButton("Confirm", null);
         builder.setNegativeButton("Cancel", (dialog, which) -> {
-            // Cancel email editing
             isEmailBeingEdited = false;
             emailField.setText(currentUserEmail);
             emailField.setEnabled(false);
@@ -120,42 +117,94 @@ public class ProfileFragment extends Fragment {
         });
 
         AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            Button confirmButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            confirmButton.setOnClickListener(v -> {
+                String currentPassword = currentPasswordField.getText().toString().trim();
+
+                if (TextUtils.isEmpty(currentPassword)) {
+                    Toast.makeText(getContext(), "Current password is required", Toast.LENGTH_SHORT).show();
+                    currentPasswordField.setText("");
+                    return;
+                }
+
+                if (!databaseHelper.checkUser(currentUserEmail, currentPassword)) {
+                    Toast.makeText(getContext(), "Incorrect current password. Try again.", Toast.LENGTH_SHORT).show();
+                    currentPasswordField.setText("");
+                    return;
+                }
+
+                saveUserProfile(currentPassword, null);
+                isEmailBeingEdited = false;
+                dialog.dismiss();
+            });
+        });
+
         dialog.show();
     }
+
 
     private void showCreateNewPasswordDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Create New Password");
 
-        // Inflate the custom dialog layout
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_new_password, null);
         builder.setView(dialogView);
 
         EditText currentPasswordField = dialogView.findViewById(R.id.currentPasswordField);
         EditText newPasswordField = dialogView.findViewById(R.id.newPasswordField);
 
-        builder.setPositiveButton("Save", (dialog, which) -> {
-            String currentPassword = currentPasswordField.getText().toString().trim();
-            String newPassword = newPasswordField.getText().toString().trim();
-
-            if (TextUtils.isEmpty(currentPassword) || TextUtils.isEmpty(newPassword)) {
-                Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (!databaseHelper.checkUser(currentUserEmail, currentPassword)) {
-                Toast.makeText(getContext(), "Incorrect current password", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            saveUserProfile(currentPassword, newPassword); // Update password only
-        });
-
+        builder.setPositiveButton("Save", null); // Set to null initially
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
         AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            saveButton.setOnClickListener(v -> {
+                String currentPassword = currentPasswordField.getText().toString().trim();
+                String newPassword = newPasswordField.getText().toString().trim();
+
+                if (TextUtils.isEmpty(currentPassword) || TextUtils.isEmpty(newPassword)) {
+                    Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
+                    currentPasswordField.setText("");
+                    newPasswordField.setText("");
+                    return;
+                }
+
+                if (!databaseHelper.checkUser(currentUserEmail, currentPassword)) {
+                    Toast.makeText(getContext(), "Incorrect current password. Try again.", Toast.LENGTH_SHORT).show();
+                    currentPasswordField.setText("");
+                    newPasswordField.setText("");
+                    return;
+                }
+
+                if (!isValidPassword(newPassword)) {
+                    Toast.makeText(getContext(), "Password must be 6–12 characters, include a number, uppercase, and lowercase letter.", Toast.LENGTH_LONG).show();
+                    newPasswordField.setText("");
+                    return;
+                }
+
+                if (currentPassword.equals(newPassword)) {
+                    Toast.makeText(getContext(), "New password must be different from the current password.", Toast.LENGTH_SHORT).show();
+                    newPasswordField.setText("");
+                    return;
+                }
+
+                saveUserProfile(currentPassword, newPassword);
+                dialog.dismiss();
+            });
+        });
+
         dialog.show();
     }
+
+    private boolean isValidPassword(String password) {
+        String passwordRegex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{6,12}$";
+        return password.matches(passwordRegex);
+    }
+
 
     private void saveUserProfile(String currentPassword, String newPassword) {
         String newEmail = emailField.getText().toString().trim();
@@ -171,8 +220,13 @@ public class ProfileFragment extends Fragment {
         boolean isUpdated = databaseHelper.updateUserProfile(currentUserEmail, newEmail, newPassword);
 
         if (isUpdated) {
+            SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("currentUserEmail", newEmail);
+            editor.apply();
+
             Toast.makeText(getContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show();
-            currentUserEmail = newEmail; // Update email reference
+            currentUserEmail = newEmail;
             emailField.setEnabled(false);
         } else {
             Toast.makeText(getContext(), "Failed to update profile", Toast.LENGTH_SHORT).show();
