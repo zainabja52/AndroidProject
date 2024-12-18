@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
@@ -90,6 +91,13 @@ public class NewTaskFragment extends Fragment {
     }
 
     private void saveTask() {
+        SharedPreferences preferences = getActivity().getSharedPreferences("USER_PREF", Context.MODE_PRIVATE);
+        String userEmail = preferences.getString("email", ""); // To Get the email
+        Log.d("DEBUG_EMAIL", "User email: " + userEmail);
+        if (userEmail == null || userEmail.isEmpty()) {
+            Toast.makeText(getContext(), "Error: User email not found. Please log in again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         String title = taskTitleField.getText().toString();
         String description = taskDescriptionField.getText().toString();
         String dueDate = dueDateField.getText().toString();
@@ -109,12 +117,13 @@ public class NewTaskFragment extends Fragment {
         // Check for duplicates
         Cursor cursor = taskDatabaseHelper.getTaskByTitleAndDate(title, dueDate + " " + dueTime);
         if (cursor != null && cursor.getCount() > 0) {
+
             Toast.makeText(getContext(), "Task already exists", Toast.LENGTH_SHORT).show();
             cursor.close();
             return;
         }
 
-        boolean isInserted = taskDatabaseHelper.insertTask(title, description, dueDate + " " + dueTime, priority, status, reminder);
+        boolean isInserted = taskDatabaseHelper.insertTask(userEmail, title, description, dueDate + " " + dueTime, priority, status, reminder);
         if (isInserted) {
             Toast.makeText(getContext(), "Task saved successfully", Toast.LENGTH_SHORT).show();
 

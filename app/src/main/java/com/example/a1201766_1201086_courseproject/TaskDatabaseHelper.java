@@ -17,9 +17,11 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_PRIORITY = "priority";
     private static final String COL_STATUS = "status";
     private static final String COL_REMINDER = "reminder";
+    private static final String COL_USER_EMAIL = "user_email"; // Added column for user-specific tasks
+
 
     public TaskDatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, 1);
+        super(context, DATABASE_NAME, null, 2);
     }
 
     @Override
@@ -31,7 +33,8 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
                 COL_DUE_DATE + " TEXT, " +
                 COL_PRIORITY + " TEXT, " +
                 COL_STATUS + " TEXT, " +
-                COL_REMINDER + " TEXT," +
+                COL_REMINDER + " TEXT, " +
+                COL_USER_EMAIL + " TEXT, " +
                 "UNIQUE(" + COL_TITLE + ", " + COL_DUE_DATE + "))";
         db.execSQL(createTable);
     }
@@ -42,7 +45,7 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean insertTask(String title, String description, String dueDate, String priority, String status, String reminder) {
+    public boolean insertTask(String userEmail,String title, String description, String dueDate, String priority, String status, String reminder) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COL_TITLE, title);
@@ -51,6 +54,7 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_PRIORITY, priority);
         values.put(COL_STATUS, status);
         values.put(COL_REMINDER, reminder);
+        values.put(COL_USER_EMAIL, userEmail);
 
         try {
             long result = db.insertOrThrow(TABLE_NAME, null, values);
@@ -60,14 +64,14 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public Cursor getAllTasks() {
+    public Cursor getAllTasks(String userEmail) {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " ORDER BY " + COL_DUE_DATE, null);
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE user_email = ? ORDER BY due_date", new String[]{userEmail});
     }
 
-    public Cursor getCompletedTasks() {
+    public Cursor getCompletedTasks(String userEmail) {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + COL_STATUS + "='completed' ORDER BY " + COL_DUE_DATE, null);
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + COL_USER_EMAIL + " = ? AND " + COL_STATUS + "='completed' ORDER BY " + COL_DUE_DATE, new String[]{userEmail});
     }
 
     public Cursor searchTasks(String startDate, String endDate) {

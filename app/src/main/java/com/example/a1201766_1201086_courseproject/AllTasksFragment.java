@@ -1,5 +1,7 @@
 package com.example.a1201766_1201086_courseproject;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -38,7 +40,9 @@ public class AllTasksFragment extends Fragment {
     }
 
     private void loadTasks() {
-        Cursor cursor = taskDatabaseHelper.getAllTasksGroupedByDate();
+        SharedPreferences preferences = getActivity().getSharedPreferences("USER_PREF", Context.MODE_PRIVATE);
+        String userEmail = preferences.getString("email", ""); // Get user email
+        Cursor cursor = taskDatabaseHelper.getAllTasks(userEmail);
 
         Map<String, List<Task>> groupedTasks = new HashMap<>();
         while (cursor.moveToNext()) {
@@ -53,7 +57,6 @@ public class AllTasksFragment extends Fragment {
                     cursor.getString(cursor.getColumnIndexOrThrow("reminder"))
             );
 
-            // Group tasks by due date
             groupedTasks.putIfAbsent(dueDate, new ArrayList<>());
             groupedTasks.get(dueDate).add(task);
         }
@@ -63,6 +66,7 @@ public class AllTasksFragment extends Fragment {
         List<String> dateKeys = new ArrayList<>(groupedTasks.keySet());
         dateKeys.sort(String::compareTo); // Sort dates chronologically
 
+        // Set adapter to display the tasks
         recyclerView.setAdapter(new TaskAdapter(groupedTasks, dateKeys));
     }
 

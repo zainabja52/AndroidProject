@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -39,8 +40,9 @@ public class MainActivity extends AppCompatActivity {
 
         dbHelper = new DatabaseHelper(this);
 
-        SharedPreferences preferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
+        SharedPreferences preferences = getSharedPreferences("USER_PREF", MODE_PRIVATE);
         emailField.setText(preferences.getString("email", ""));
+
 
 
         signInButton.setOnClickListener(view -> {
@@ -51,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Please enter all fields!", Toast.LENGTH_SHORT).show();
             } else if (dbHelper.checkUser(email, password)) {
                 SharedPreferences.Editor editor = preferences.edit();
+                editor.putString("email", email); // Save logged-in user's email
+                editor.apply();
+                Log.d("LOGIN_EMAIL", "User email saved: " + email);
 
                 if (rememberMeCheckBox.isChecked()) {
                     editor.putString("email", email);
