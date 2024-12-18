@@ -13,4 +13,10 @@
     <color name="hint_text_color">#C7745E</color>
     <color name="button_color">#8A9C6B</color>
     <color name="button_text_color">#FFFFFF</color>
+    <color name="body_text_color">#555555</color>
+    <color name="card_color_light">#FFFFFF</color>
+    <color name="button2_color">#C7745E</color>
+    <color name="edittext_color">#DDDDDD</color>
+
+
 </resources>
