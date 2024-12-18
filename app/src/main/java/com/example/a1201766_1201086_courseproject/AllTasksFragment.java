@@ -67,7 +67,6 @@ public class AllTasksFragment extends Fragment {
         dateKeys.sort(String::compareTo); // Sort dates chronologically
 
         // Set adapter to display the tasks
-        recyclerView.setAdapter(new TaskAdapter(groupedTasks, dateKeys));
+        recyclerView.setAdapter(new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper));
     }
-
 }

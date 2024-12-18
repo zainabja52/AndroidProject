@@ -64,6 +64,6 @@ public class CompletedTasksFragment extends Fragment {
         dateKeys.sort(String::compareTo);
 
         // Bind grouped tasks to RecyclerView
-        recyclerView.setAdapter(new TaskAdapter(groupedTasks, dateKeys));
+        recyclerView.setAdapter(new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper));
     }
 }

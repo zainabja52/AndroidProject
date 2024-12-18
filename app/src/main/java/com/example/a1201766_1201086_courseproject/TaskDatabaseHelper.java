@@ -92,6 +92,15 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
         return result > 0;
     }
 
+    public boolean updateTaskStatus(int id, String status) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_STATUS, status);
+        int result = db.update(TABLE_NAME, values, COL_ID + "=?", new String[]{String.valueOf(id)});
+        return result > 0;
+    }
+
+
     public boolean deleteTask(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         int result = db.delete(TABLE_NAME, COL_ID + "=?", new String[]{String.valueOf(id)});
@@ -126,6 +135,13 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM tasks WHERE status = 'completed' ORDER BY due_date ASC", null);
     }
+
+    public Cursor getTasksForToday(String userEmail, String todayDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM tasks WHERE user_email = ? AND due_date LIKE ?",
+                new String[]{userEmail, todayDate + "%"});
+    }
+
 
 
 }
