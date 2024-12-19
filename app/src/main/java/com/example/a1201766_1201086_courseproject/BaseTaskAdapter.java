@@ -30,7 +30,6 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
             0xFFF8B6AD,
             0xFFC7745E,
             0xFF8A9C6B,
-            0xFFFFFACD
     };
 
     public BaseTaskAdapter(Context context, List<Task> taskList, TaskDatabaseHelper taskDatabaseHelper) {
@@ -38,6 +37,11 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         this.taskList = taskList;
         this.taskDatabaseHelper = taskDatabaseHelper;
     }
+
+    public List<T> getTaskList() {
+        return (List<T>) taskList;
+    }
+
 
     @NonNull
     @Override
@@ -227,4 +231,12 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
             deleteButton = itemView.findViewById(R.id.deleteButton);
         }
     }
+
+    public void updateTaskList(List<Task> updatedTasks) {
+        this.taskList.clear();
+        this.taskList.addAll(updatedTasks);
+        notifyDataSetChanged();
+    }
+
+
 }

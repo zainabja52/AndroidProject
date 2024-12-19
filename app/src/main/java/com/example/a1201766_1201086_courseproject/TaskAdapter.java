@@ -24,4 +24,10 @@ public class TaskAdapter extends BaseTaskAdapter<Task> {
         }
         return allTasks;
     }
+
+    public void updateGroupedTasks(Map<String, List<Task>> newGroupedTasks) {
+        List<Task> updatedTasks = flattenTasks(newGroupedTasks);
+        updateTaskList(updatedTasks); // Use BaseTaskAdapter's method to update the list
+    }
+
 }

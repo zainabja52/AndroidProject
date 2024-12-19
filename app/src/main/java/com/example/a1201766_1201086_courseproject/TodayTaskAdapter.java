@@ -13,4 +13,14 @@ public class TodayTaskAdapter extends BaseTaskAdapter<Task> {
     protected int getLayoutId() {
         return R.layout.item_task;
     }
+
+    // Check if all tasks are completed
+    public boolean areAllTasksCompleted() {
+        for (Task task : getTaskList()) {
+            if (!"completed".equalsIgnoreCase(task.getStatus())) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

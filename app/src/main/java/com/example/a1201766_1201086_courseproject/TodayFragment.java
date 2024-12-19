@@ -4,9 +4,18 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,6 +35,7 @@ public class TodayFragment extends Fragment {
     private TodayTaskAdapter taskAdapter;
     private TaskDatabaseHelper taskDatabaseHelper;
     private List<Task> todayTasks;
+    private EditText searchBar;
 
     @Nullable
     @Override
@@ -36,6 +46,7 @@ public class TodayFragment extends Fragment {
         // Initialize views
         recyclerView = view.findViewById(R.id.recyclerViewTodayTasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        searchBar = view.findViewById(R.id.searchBar); // Add search bar
 
         // Initialize helper and task list
         taskDatabaseHelper = new TaskDatabaseHelper(getContext());
@@ -47,6 +58,9 @@ public class TodayFragment extends Fragment {
         // Set up adapter
         taskAdapter = new TodayTaskAdapter(getContext(), todayTasks, taskDatabaseHelper);
         recyclerView.setAdapter(taskAdapter);
+
+        // Set up search bar
+        setupSearch();
 
         return view;
     }
@@ -64,6 +78,8 @@ public class TodayFragment extends Fragment {
         // Query tasks for today
         Cursor cursor = taskDatabaseHelper.getTasksForToday(userEmail, todayDate);
 
+        todayTasks.clear(); // Clear the list before loading
+
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 Task task = new Task(
@@ -79,5 +95,92 @@ public class TodayFragment extends Fragment {
             }
             cursor.close();
         }
+
+        // Notify the adapter about data changes
+        if (taskAdapter != null) {
+            taskAdapter.notifyDataSetChanged();
+
+            // Check if all tasks are completed
+            checkAndShowCongratulations();
+        }
+    }
+
+    private void setupSearch() {
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterTasks(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    private void filterTasks(String query) {
+        List<Task> filteredTasks = new ArrayList<>();
+
+        // Iterate through all tasks and filter by title or description
+        for (Task task : todayTasks) {
+            if (task.getTitle().toLowerCase().contains(query.toLowerCase()) ||
+                    task.getDescription().toLowerCase().contains(query.toLowerCase())) {
+                filteredTasks.add(task);
+            }
+        }
+
+        // Update the adapter with the filtered tasks
+        taskAdapter.updateTaskList(filteredTasks);
+    }
+
+    private void checkAndShowCongratulations() {
+        boolean allCompleted = true;
+
+        for (Task task : todayTasks) {
+            if (!"completed".equalsIgnoreCase(task.getStatus())) {
+                allCompleted = false;
+                break; // No need to check further
+            }
+        }
+
+        if (allCompleted) {
+            showCongratulations();
+        } else {
+            // Debugging to ensure correct task statuses
+            for (Task task : todayTasks) {
+                System.out.println("Task: " + task.getTitle() + " | Status: " + task.getStatus());
+            }
+        }
+    }
+
+
+    private void showCongratulations() {
+        // Toast message for quick feedback
+        Toast.makeText(getContext(), "Congratulations! All tasks for today are completed!", Toast.LENGTH_LONG).show();
+
+        // Create a dialog for the celebratory animation
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_congratulations, null);
+        builder.setView(dialogView);
+
+        android.app.AlertDialog dialog = builder.create();
+
+        // Find and set up animation/image
+        ImageView celebrationImage = dialogView.findViewById(R.id.celebrationImage);
+        TextView messageText = dialogView.findViewById(R.id.messageText);
+        messageText.setText("Well Done! All tasks for today are completed!");
+
+        // Optional: Add custom animation to the image
+        Animation animation = AnimationUtils.loadAnimation(getContext(), R.anim.bounce);
+        celebrationImage.startAnimation(animation);
+
+        // Show the dialog
+        dialog.show();
+
+        // Automatically dismiss dialog after 3 seconds
+        new Handler().postDelayed(dialog::dismiss, 3000);
     }
 }

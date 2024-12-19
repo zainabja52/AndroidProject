@@ -10,11 +10,22 @@
         android:layout_height="250dp"
         android:scaleType="fitXY" />
 
+    <EditText
+        android:id="@+id/searchBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/topImage"
+        android:layout_margin="8dp"
+        android:hint="Search tasks..."
+        android:padding="12dp"
+        android:background="@drawable/custom_edittext"
+        android:inputType="text" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewTodayTasks"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/topImage"
+        android:layout_below="@id/searchBar"
         android:layout_marginTop="8dp"
         android:padding="16dp"
         android:clipToPadding="false" />
