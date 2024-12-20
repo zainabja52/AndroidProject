@@ -1,13 +1,14 @@
 package com.example.a1201766_1201086_courseproject;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -21,11 +22,17 @@ public class HomeActivity extends AppCompatActivity {
     private NavigationView navigationView;
     private ActionBarDrawerToggle drawerToggle;
     private String userEmail;
+    private SwitchCompat themeToggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize ThemeManager and apply the current theme
+        ThemeManager.init(this);
+        ThemeManager.setDarkMode(ThemeManager.isDarkMode());
         setContentView(R.layout.activity_home);
+        getSupportActionBar().setTitle("Task Management App");
 
         userEmail = getIntentEmail();
 
@@ -42,6 +49,18 @@ public class HomeActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+
+        // Access the header view of the NavigationView
+        View headerView = navigationView.getHeaderView(0);
+        themeToggle = headerView.findViewById(R.id.themeToggle);
+
+        // Set the initial state of the toggle switch
+        themeToggle.setChecked(ThemeManager.isDarkMode());
+
+        // Handle theme toggle changes
+        themeToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            ThemeManager.setDarkMode(isChecked); // Save and apply theme
+        });
 
         // Set the NavigationItemSelectedListener
         navigationView.setNavigationItemSelectedListener(item -> {
@@ -68,7 +87,6 @@ public class HomeActivity extends AppCompatActivity {
                     profileFragment.setArguments(args);
                     loadFragment(profileFragment);
                     break;
-
                 case R.id.nav_logout:
                     logout();
                     break;
@@ -83,13 +101,11 @@ public class HomeActivity extends AppCompatActivity {
         loadFragment(new TodayFragment());
     }
 
-    // Method to retrieve email from intent
     private String getIntentEmail() {
         Intent intent = getIntent();
         return intent.getStringExtra("email");
     }
 
-    // Method to load fragments dynamically
     private void loadFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.contentFrame, fragment);
@@ -97,26 +113,7 @@ public class HomeActivity extends AppCompatActivity {
         transaction.commit();
     }
 
-    // Logout logic
     private void logout() {
-
-        SharedPreferences preferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-
-        boolean rememberMe = preferences.getBoolean("rememberMe", false);
-
-        if (!rememberMe) {
-            editor.remove("email");
-        }
-
-        editor.apply();
-
-
-
-        // Clear user data or preferences
-        editor.clear();
-        editor.apply();
-
         // Redirect to MainActivity
         Intent intent = new Intent(HomeActivity.this, MainActivity.class);
         startActivity(intent);

@@ -36,6 +36,7 @@ public class TodayFragment extends Fragment {
     private TaskDatabaseHelper taskDatabaseHelper;
     private List<Task> todayTasks;
     private EditText searchBar;
+    private ImageView backgroundImageView;
 
     @Nullable
     @Override
@@ -47,6 +48,12 @@ public class TodayFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewTodayTasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         searchBar = view.findViewById(R.id.searchBar); // Add search bar
+        backgroundImageView = view.findViewById(R.id.topImage);
+
+        boolean isDarkMode = ThemeManager.isDarkMode();
+        int backgroundResource = isDarkMode ? R.drawable.img_3 : R.drawable.img_1;
+        backgroundImageView.setImageResource(backgroundResource);
+
 
         // Initialize helper and task list
         taskDatabaseHelper = new TaskDatabaseHelper(getContext());

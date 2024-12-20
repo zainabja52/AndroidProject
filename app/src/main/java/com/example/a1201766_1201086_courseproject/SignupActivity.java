@@ -11,6 +11,8 @@ import android.text.TextUtils;
 import android.util.Patterns;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,11 +22,17 @@ public class SignupActivity extends AppCompatActivity {
     EditText emailField, firstNameField, lastNameField, passwordField, confirmPasswordField;
     Button registerButton;
     DatabaseHelper dbHelper;
+    ImageView backgroundImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ThemeManager.init(this);
+        boolean isDarkMode = ThemeManager.isDarkMode();
+        ThemeManager.setDarkMode(isDarkMode);
         setContentView(R.layout.activity_signup);
+        getSupportActionBar().setTitle("Task Management App");
+
 
         // Enable the back button in the action bar
         if (getSupportActionBar() != null) {
@@ -32,6 +40,13 @@ public class SignupActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Sign Up"); // Optional: Set a title
         }
+
+        backgroundImageView = findViewById(R.id.backgroundImageView);
+
+        // Dynamically set the background image based on the theme
+        int backgroundImage = isDarkMode ? R.drawable.photo3 : R.drawable.photo1;
+        backgroundImageView.setImageResource(backgroundImage);
+
 
         // Initialize views
         emailField = findViewById(R.id.emailField);

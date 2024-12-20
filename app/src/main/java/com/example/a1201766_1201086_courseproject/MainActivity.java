@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,9 +24,12 @@ public class MainActivity extends AppCompatActivity {
     CheckBox rememberMeCheckBox;
     Button signInButton, signUpButton;
     DatabaseHelper dbHelper;
+    ImageView backgroundImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeManager.init(this);
+        ThemeManager.setDarkMode(ThemeManager.isDarkMode());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getSupportActionBar().setTitle("Task Management App");
@@ -37,8 +41,15 @@ public class MainActivity extends AppCompatActivity {
         rememberMeCheckBox = findViewById(R.id.rememberMeCheckBox);
         signInButton = findViewById(R.id.signInButton);
         signUpButton = findViewById(R.id.signUpButton);
-
+        backgroundImageView = findViewById(R.id.backgroundImageView);
         dbHelper = new DatabaseHelper(this);
+
+        if (ThemeManager.isDarkMode()) {
+            backgroundImageView.setImageResource(R.drawable.photo3); // Set dark mode background
+        } else {
+            backgroundImageView.setImageResource(R.drawable.photo1); // Set light mode background
+        }
+
 
         SharedPreferences preferences = getSharedPreferences("USER_PREF", MODE_PRIVATE);
         emailField.setText(preferences.getString("email", ""));
