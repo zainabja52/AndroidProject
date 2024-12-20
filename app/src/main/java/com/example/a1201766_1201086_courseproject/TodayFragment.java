@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.RotateAnimation;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -34,8 +35,13 @@ public class TodayFragment extends Fragment {
     private RecyclerView recyclerView;
     private TodayTaskAdapter taskAdapter;
     private TaskDatabaseHelper taskDatabaseHelper;
+    private List<Task> originalTodayTasks;
     private List<Task> todayTasks;
     private EditText searchBar;
+    private ImageView sortIcon;
+    private boolean isAscending = true;
+
+
     private ImageView backgroundImageView;
 
     @Nullable
@@ -47,6 +53,8 @@ public class TodayFragment extends Fragment {
         // Initialize views
         recyclerView = view.findViewById(R.id.recyclerViewTodayTasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        searchBar = view.findViewById(R.id.searchBar);
+        sortIcon = view.findViewById(R.id.sortIcon);
         searchBar = view.findViewById(R.id.searchBar); // Add search bar
         backgroundImageView = view.findViewById(R.id.topImage);
 
@@ -58,6 +66,7 @@ public class TodayFragment extends Fragment {
         // Initialize helper and task list
         taskDatabaseHelper = new TaskDatabaseHelper(getContext());
         todayTasks = new ArrayList<>();
+        originalTodayTasks = new ArrayList<>();
 
         // Load today's tasks
         loadTodayTasks();
@@ -65,6 +74,8 @@ public class TodayFragment extends Fragment {
         // Set up adapter
         taskAdapter = new TodayTaskAdapter(getContext(), todayTasks, taskDatabaseHelper,this);
         recyclerView.setAdapter(taskAdapter);
+
+        sortIcon.setOnClickListener(v -> toggleSorting());
 
         // Set up search bar
         setupSearch();
@@ -85,7 +96,8 @@ public class TodayFragment extends Fragment {
         // Query tasks for today
         Cursor cursor = taskDatabaseHelper.getTasksForToday(userEmail, todayDate);
 
-        todayTasks.clear(); // Clear the list before loading
+        todayTasks.clear();
+        originalTodayTasks.clear();
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
@@ -96,9 +108,14 @@ public class TodayFragment extends Fragment {
                         cursor.getString(cursor.getColumnIndexOrThrow("due_date")),
                         cursor.getString(cursor.getColumnIndexOrThrow("priority")),
                         cursor.getString(cursor.getColumnIndexOrThrow("status")),
-                        cursor.getString(cursor.getColumnIndexOrThrow("reminder"))
+                        cursor.getString(cursor.getColumnIndexOrThrow("reminder")),
+                        cursor.isNull(cursor.getColumnIndexOrThrow("custom_notification_time")) ? null : cursor.getString(cursor.getColumnIndexOrThrow("custom_notification_time")),
+                        cursor.isNull(cursor.getColumnIndexOrThrow("snooze_duration")) ? 0 : cursor.getInt(cursor.getColumnIndexOrThrow("snooze_duration")),
+                        cursor.getInt(cursor.getColumnIndexOrThrow("default_reminder_enabled")) == 1
+
                 );
                 todayTasks.add(task);
+                originalTodayTasks.add(task);
             }
             cursor.close();
         }
@@ -110,6 +127,18 @@ public class TodayFragment extends Fragment {
             // Check if all tasks are completed
             checkAndShowCongratulations();
         }
+    }
+    private void toggleSorting() {
+        isAscending = !isAscending;
+
+        taskAdapter.sortTasksByPriority(isAscending);
+
+        RotateAnimation rotate = new RotateAnimation(0, 180, sortIcon.getWidth() / 2, sortIcon.getHeight() / 2);
+        rotate.setDuration(300);
+        rotate.setFillAfter(true);
+        sortIcon.startAnimation(rotate);
+
+        Toast.makeText(getContext(), isAscending ? "Sorted by Ascending Priority" : "Sorted by Descending Priority", Toast.LENGTH_SHORT).show();
     }
 
     private void setupSearch() {
@@ -128,24 +157,25 @@ public class TodayFragment extends Fragment {
     }
 
     private void filterTasks(String query) {
+        if (query.isEmpty()) {
+            taskAdapter.updateTaskList(new ArrayList<>(originalTodayTasks));
+            return;
+        }
         List<Task> filteredTasks = new ArrayList<>();
-
-        // Iterate through all tasks and filter by title or description
-        for (Task task : todayTasks) {
+        for (Task task : originalTodayTasks) {
             if (task.getTitle().toLowerCase().contains(query.toLowerCase()) ||
                     task.getDescription().toLowerCase().contains(query.toLowerCase())) {
                 filteredTasks.add(task);
             }
         }
 
-        // Update the adapter with the filtered tasks
         taskAdapter.updateTaskList(filteredTasks);
     }
 
     void checkAndShowCongratulations() {
         boolean allCompleted = true;
 
-        for (Task task : todayTasks) {
+        for (Task task : originalTodayTasks) {
             if (!"completed".equalsIgnoreCase(task.getStatus())) {
                 allCompleted = false;
                 break; // No need to check further

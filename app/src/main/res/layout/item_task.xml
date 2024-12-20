@@ -45,12 +45,15 @@
             android:layout_marginTop="4dp"
             android:textColor="@color/black" />
 
+        <!-- Action Buttons and Notification Icon -->
         <!-- Action Buttons and Spinner -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:layout_marginTop="12dp">
+
 
             <!-- Edit Button -->
             <TextView
@@ -64,6 +67,8 @@
                 android:textSize="16sp"
                 android:textColor="@color/black"
                 android:padding="8dp" />
+
+
 
             <!-- Status Spinner -->
             <Spinner
@@ -99,6 +104,16 @@
                 android:textColor="@color/black"
                 android:textSize="16sp"
                 android:padding="8dp" />
+
+
+            <!-- Notification Icon -->
+            <ImageView
+                android:id="@+id/notificationIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/ic_reminder"
+                android:contentDescription="Notification Settings" />
 
         </LinearLayout>
 

@@ -5,10 +5,12 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,6 +30,7 @@ import androidx.fragment.app.Fragment;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -46,6 +49,8 @@ public class NewTaskFragment extends Fragment {
     private CardView searchCardView, taskDetailsCard;
     private TextView taskDetailsText;
     private String selectedTaskTitle, selectedTaskDate;
+    private boolean isReminderSet = false;
+
 
 
     @Override
@@ -73,7 +78,6 @@ public class NewTaskFragment extends Fragment {
         taskDatabaseHelper = new TaskDatabaseHelper(getContext());
 
 
-        // Set up Spinner
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 getContext(),
                 R.array.priority_options,
@@ -89,11 +93,11 @@ public class NewTaskFragment extends Fragment {
         saveTaskButton.setOnClickListener(v -> saveTask());
         reminderButton.setOnClickListener(v -> setReminder());
         deleteTaskButton.setOnClickListener(v -> {
-            searchCardView.setVisibility(View.VISIBLE); // Show search card
-            searchTaskField.setText(""); // Clear search field
-            taskListView.setAdapter(null); // Clear ListView to remove old results
-            taskListView.setVisibility(View.GONE); // Hide ListView initially
-            taskDetailsCard.setVisibility(View.GONE); // Hide task details card
+            searchCardView.setVisibility(View.VISIBLE);
+            searchTaskField.setText("");
+            taskListView.setAdapter(null);
+            taskListView.setVisibility(View.GONE);
+            taskDetailsCard.setVisibility(View.GONE);
 
             Toast.makeText(getContext(), "Search and select a task to delete", Toast.LENGTH_SHORT).show();
         });
@@ -274,14 +278,13 @@ public class NewTaskFragment extends Fragment {
             priority = "Medium"; // Fallback if no selection
         }
         String status = completionStatusCheckbox.isChecked() ? "completed" : "pending";
-        String reminder = "reminder"; // Placeholder for reminder logic
+        String reminder = reminderButton.isEnabled() ? "reminder" : "";
 
         if (title.isEmpty() || description.isEmpty() || dueDate.isEmpty() || dueTime.isEmpty() || priority.isEmpty()) {
             Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Check for duplicates
         Cursor cursor = taskDatabaseHelper.getTaskByTitleAndDate(title, dueDate + " " + dueTime);
         if (cursor != null && cursor.getCount() > 0) {
 
@@ -290,7 +293,7 @@ public class NewTaskFragment extends Fragment {
             return;
         }
 
-        boolean isInserted = taskDatabaseHelper.insertTask(userEmail, title, description, dueDate + " " + dueTime, priority, status, reminder);
+        boolean isInserted = taskDatabaseHelper.insertTask(userEmail, title, description, dueDate + " " + dueTime, priority, status, reminder, null, 0, true);
         if (isInserted) {
             Toast.makeText(getContext(), "Task saved successfully", Toast.LENGTH_SHORT).show();
 
@@ -301,6 +304,7 @@ public class NewTaskFragment extends Fragment {
             dueTimeField.setText("");
             prioritySpinner.setSelection(1);
             completionStatusCheckbox.setChecked(false);
+            isReminderSet = false;
         } else {
             Toast.makeText(getContext(), "Failed to save task", Toast.LENGTH_SHORT).show();
         }
@@ -343,26 +347,36 @@ public class NewTaskFragment extends Fragment {
 
         // Parse date and time into a timestamp
         long reminderTime = parseDateTimeToMillis(dueDate, dueTime);
-        //long reminderTime = System.currentTimeMillis() + 60 * 1000;
         if (reminderTime <= System.currentTimeMillis()) {
             Toast.makeText(getContext(), "Reminder time must be in the future", Toast.LENGTH_SHORT).show();
             return;
         }
 
         scheduleNotification(title, "Task Reminder", reminderTime);
-        Toast.makeText(getContext(), "Reminder set successfully", Toast.LENGTH_SHORT).show();
-    }
 
-    private long parseDateTimeToMillis(String date, String time) {
-        try {
-            String dateTime = date + " " + time;
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-            return sdf.parse(dateTime).getTime();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
+        boolean isUpdated = taskDatabaseHelper.updateTaskReminder(title, dueDate + " " + dueTime, "reminder");
+        if (isUpdated) {
+            Toast.makeText(getContext(), "Reminder set successfully.", Toast.LENGTH_SHORT).show();
         }
     }
+
+    public static long parseDateTimeToMillis(String dueDate, String dueTime) {
+        try {
+            String dateTime = dueDate + " " + dueTime;
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+            Date parsedDate = sdf.parse(dateTime);
+            if (parsedDate != null) {
+                return parsedDate.getTime();
+            } else {
+                Log.e("ReminderReceiver", "Parsed date is null.");
+                return -1;
+            }
+        } catch (Exception e) {
+            Log.e("ReminderReceiver", "Error parsing date and time: " + e.getMessage());
+            return -1;
+        }
+    }
+
 
     private void scheduleNotification(String title, String message, long reminderTime) {
 

@@ -10,6 +10,27 @@
         <item>Medium</item>
         <item>Low</item>
     </string-array>
+
+    <string-array name="notification_types">
+        <item>Custom Date and Time</item>
+        <item>Predefined Options</item>
+
+    </string-array>
+    <string-array name="snooze_durations">
+        <item>5 minutes</item>
+        <item>10 minutes</item>
+        <item>15 minutes</item>
+        <item>30 minutes</item>
+    </string-array>
+
+
+    <string-array name="predefined_options">
+        <item>Same Day</item>
+        <item>Days Before</item>
+        <item>Hours Before</item>
+    </string-array>
+
+
     <string-array name="status_options">
         <item>pending</item>
         <item>completed</item>

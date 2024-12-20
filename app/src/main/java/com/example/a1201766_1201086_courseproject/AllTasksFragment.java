@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.database.Cursor;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class AllTasksFragment extends Fragment {
 
@@ -32,14 +34,17 @@ public class AllTasksFragment extends Fragment {
     private RecyclerView recyclerView;
     private TaskAdapter taskAdapter;
     private EditText searchBar;
+    private ImageView sortIcon;
     private List<Task> taskList;
     private Map<String, List<Task>> groupedTasks;
+    private boolean isAscending = true;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_all_tasks, container, false);
         Button importButton = view.findViewById(R.id.button_import_tasks);
+        sortIcon = view.findViewById(R.id.sortIcon);
 
         taskDatabaseHelper = new TaskDatabaseHelper(getContext());
         recyclerView = view.findViewById(R.id.recyclerViewAllTasks);
@@ -49,10 +54,13 @@ public class AllTasksFragment extends Fragment {
         taskList = new ArrayList<>();
         groupedTasks = new HashMap<>();
 
-        loadTasks();
 
         taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,this,null);
         recyclerView.setAdapter(taskAdapter);
+
+        loadTasks();
+
+        sortIcon.setOnClickListener(v -> toggleSorting());
 
         searchBar.addTextChangedListener(new TextWatcher() {
             @Override
@@ -75,11 +83,11 @@ public class AllTasksFragment extends Fragment {
 
     public void loadTasks() {
         SharedPreferences preferences = getActivity().getSharedPreferences("USER_PREF", Context.MODE_PRIVATE);
-        String userEmail = preferences.getString("email", ""); // Get user email
+        String userEmail = preferences.getString("email", "");
         Cursor cursor = taskDatabaseHelper.getAllTasks(userEmail);
 
-        groupedTasks.clear(); // Clear previous data
-        taskList.clear(); // Clear previous task list
+        groupedTasks.clear();
+        taskList.clear();
 
         while (cursor != null && cursor.moveToNext()) {
             String dueDate = cursor.getString(cursor.getColumnIndexOrThrow("due_date"));
@@ -90,30 +98,79 @@ public class AllTasksFragment extends Fragment {
                     dueDate,
                     cursor.getString(cursor.getColumnIndexOrThrow("priority")),
                     cursor.getString(cursor.getColumnIndexOrThrow("status")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("reminder"))
+                    cursor.getString(cursor.getColumnIndexOrThrow("reminder")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("custom_notification_time")),
+                    cursor.getInt(cursor.getColumnIndexOrThrow("snooze_duration")),
+                    cursor.getInt(cursor.getColumnIndexOrThrow("default_reminder_enabled")) == 1
+
             );
 
-            // Add to flat task list for filtering
             taskList.add(task);
 
-            // Add to grouped tasks map
             groupedTasks.putIfAbsent(dueDate, new ArrayList<>());
             groupedTasks.get(dueDate).add(task);
         }
         cursor.close();
 
-        // Sort date keys for consistent display order
-        List<String> dateKeys = new ArrayList<>(groupedTasks.keySet());
-        dateKeys.sort(String::compareTo); // Sort dates chronologically
+        groupedTasks = new TreeMap<>(groupedTasks);
+        groupedTasks.forEach((date, tasks) -> tasks.sort((task1, task2) -> task1.getDueDate().compareTo(task2.getDueDate())));
+
+
+        getActivity().runOnUiThread(() -> {
+            taskAdapter.updateGroupedTasks(groupedTasks);
+        });
+        System.out.println("Grouped tasks after load:");
+        groupedTasks.forEach((date, tasks) -> {
+            System.out.println("Date: " + date);
+            tasks.forEach(task -> System.out.println("  Task: " + task.getTitle() + " | Time: " + task.getDueDate()));
+        });
 
         // Set the adapter
         TaskAdapter taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,this,null);
         recyclerView.setAdapter(taskAdapter);
 
-        // Set up the search bar
-        setupSearch(taskAdapter);
     }
 
+    private void toggleSorting() {
+        isAscending = !isAscending;
+
+        groupedTasks = new TreeMap<>(groupedTasks);
+        groupedTasks.forEach((date, tasks) -> tasks.sort((task1, task2) -> {
+            int priority1 = getPriorityValue(task1.getPriority());
+            int priority2 = getPriorityValue(task2.getPriority());
+            return isAscending ? Integer.compare(priority1, priority2) : Integer.compare(priority2, priority1);
+        }));
+
+
+        groupedTasks = new TreeMap<>(groupedTasks); // Ensure chronological grouping remains
+
+        System.out.println("Grouped tasks after sorting:");
+        groupedTasks.forEach((date, tasks) -> {
+            System.out.println("Date: " + date);
+            tasks.forEach(task -> System.out.println("  Task: " + task.getTitle() + " | Priority: " + task.getPriority()));
+        });
+
+        getActivity().runOnUiThread(() -> {
+            taskAdapter.updateGroupedTasks(groupedTasks);
+        });
+
+        Toast.makeText(getContext(), isAscending ? "Sorted by Ascending Priority" : "Sorted by Descending Priority", Toast.LENGTH_SHORT).show();
+    }
+
+
+
+    private int getPriorityValue(String priority) {
+        switch (priority.toLowerCase()) {
+            case "high":
+                return 1;
+            case "medium":
+                return 2;
+            case "low":
+                return 3;
+            default:
+                return 4;
+        }
+    }
     private void setupSearch(TaskAdapter taskAdapter) {
         searchBar.addTextChangedListener(new TextWatcher() {
             @Override
@@ -132,7 +189,6 @@ public class AllTasksFragment extends Fragment {
     private void filterTasks(String query) {
         Map<String, List<Task>> filteredGroupedTasks = new HashMap<>();
 
-        // Iterate through all tasks and filter by title or description
         for (Map.Entry<String, List<Task>> entry : groupedTasks.entrySet()) {
             List<Task> filteredList = new ArrayList<>();
             for (Task task : entry.getValue()) {
@@ -157,15 +213,22 @@ public class AllTasksFragment extends Fragment {
         ConnectionAsyncTask task = new ConnectionAsyncTask(tasks -> {
             if (tasks != null) {
                 for (Task importedTask : tasks) {
-                    taskDatabaseHelper.insertTask(
+                    boolean isInserted = taskDatabaseHelper.insertTask(
                             userEmail, // Pass the user's email
-                            importedTask.getTitle(),
-                            importedTask.getDescription(),
-                            importedTask.getDueDate(),
-                            importedTask.getPriority(),
-                            importedTask.getStatus(),
-                            importedTask.getReminder()
+                            importedTask.getTitle() != null ? importedTask.getTitle() : "Untitled Task",
+                            importedTask.getDescription() != null ? importedTask.getDescription() : "No Description",
+                            importedTask.getDueDate() != null ? importedTask.getDueDate() : "",
+                            importedTask.getPriority() != null ? importedTask.getPriority() : "Medium",
+                            importedTask.getStatus() != null ? importedTask.getStatus() : "pending",
+                            importedTask.getReminder() != null ? importedTask.getReminder() : "None",
+                            importedTask.getCustomNotificationTime() != null ? importedTask.getCustomNotificationTime() : null,
+                            importedTask.getSnoozeDuration() > 0 ? importedTask.getSnoozeDuration() : 0,
+                            importedTask.getDefaultReminderEnabled()
                     );
+
+                    if (!isInserted) {
+                        Toast.makeText(getContext(), "Failed to import task: " + importedTask.getTitle(), Toast.LENGTH_SHORT).show();
+                    }
                 }
                 Toast.makeText(getContext(), "Tasks Imported Successfully!", Toast.LENGTH_SHORT).show();
                 loadTasks(); // Reload tasks after import

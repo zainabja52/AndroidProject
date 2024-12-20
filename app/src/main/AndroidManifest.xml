@@ -33,6 +33,11 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".ReminderReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
         <activity
             android:name=".NewTaskFragment"
             android:theme="@style/Theme.YourApp"
