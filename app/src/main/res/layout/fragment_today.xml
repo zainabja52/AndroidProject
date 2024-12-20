@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,12 +9,24 @@
         android:layout_height="250dp"
         android:scaleType="fitXY" />
 
+    <ImageView
+        android:id="@+id/sortIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_below="@id/topImage"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="8dp"
+        android:src="@drawable/ic_sort"
+        android:contentDescription="Sort Tasks"
+        android:padding="8dp" />
+
     <EditText
         android:id="@+id/searchBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/topImage"
         android:layout_margin="8dp"
+        android:layout_toStartOf="@id/sortIcon"
         android:hint="Search tasks..."
         android:padding="12dp"
         android:background="@drawable/custom_edittext"

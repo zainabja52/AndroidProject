@@ -41,13 +41,15 @@
             android:textSize="12sp"
             android:layout_marginTop="4dp" />
 
-        <!-- Action Buttons -->
+        <!-- Action Buttons and Notification Icon -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
 
+            <!-- Edit Button -->
             <TextView
                 android:id="@+id/editButton"
                 android:layout_width="wrap_content"
@@ -56,6 +58,7 @@
                 android:textColor="#00796B"
                 android:padding="8dp" />
 
+            <!-- Mark Complete Button -->
             <TextView
                 android:id="@+id/markCompleteButton"
                 android:layout_width="wrap_content"
@@ -64,6 +67,7 @@
                 android:textColor="#00796B"
                 android:padding="8dp" />
 
+            <!-- Share Button -->
             <TextView
                 android:id="@+id/shareButton"
                 android:layout_width="wrap_content"
@@ -72,6 +76,7 @@
                 android:textColor="#00796B"
                 android:padding="8dp" />
 
+            <!-- Delete Button -->
             <TextView
                 android:id="@+id/deleteButton"
                 android:layout_width="wrap_content"
@@ -79,6 +84,15 @@
                 android:text="Delete"
                 android:textColor="#D32F2F"
                 android:padding="8dp" />
+
+            <!-- Notification Icon -->
+            <ImageView
+                android:id="@+id/notificationIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/ic_reminder"
+                android:contentDescription="Notification Settings" />
         </LinearLayout>
 
     </LinearLayout>

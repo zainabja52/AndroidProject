@@ -52,4 +52,32 @@ public class TodayTaskAdapter extends BaseTaskAdapter<Task> {
         }
         return true;
     }
+
+    // Method to update and sort the task list
+    public void sortTasksByPriority(boolean isAscending) {
+        // Sort tasks by priority in ascending or descending order
+        getTaskList().sort((task1, task2) -> {
+            int priority1 = getPriorityValue(task1.getPriority());
+            int priority2 = getPriorityValue(task2.getPriority());
+            return isAscending ? Integer.compare(priority1, priority2) : Integer.compare(priority2, priority1);
+        });
+
+        // Notify the adapter about data changes
+        notifyDataSetChanged();
+    }
+
+    // Helper method to convert priority string to a numeric value
+    private int getPriorityValue(String priority) {
+        switch (priority.toLowerCase()) {
+            case "high":
+                return 1;
+            case "medium":
+                return 2;
+            case "low":
+                return 3;
+            default:
+                return 4; // For any unexpected priority
+        }
+    }
+
 }

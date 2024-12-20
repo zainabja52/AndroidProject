@@ -65,7 +65,10 @@ public class CompletedTasksFragment extends Fragment {
                     dueDate,
                     cursor.getString(cursor.getColumnIndexOrThrow("priority")),
                     cursor.getString(cursor.getColumnIndexOrThrow("status")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("reminder"))
+                    cursor.getString(cursor.getColumnIndexOrThrow("reminder")),
+                    cursor.isNull(cursor.getColumnIndexOrThrow("custom_notification_time")) ? null : cursor.getString(cursor.getColumnIndexOrThrow("custom_notification_time")),
+                    cursor.isNull(cursor.getColumnIndexOrThrow("snooze_duration")) ? 0 : cursor.getInt(cursor.getColumnIndexOrThrow("snooze_duration")),
+                    cursor.getInt(cursor.getColumnIndexOrThrow("default_reminder_enabled")) == 1
             );
 
             groupedTasks.putIfAbsent(dueDate, new ArrayList<>());

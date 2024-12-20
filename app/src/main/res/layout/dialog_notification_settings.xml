@@ -1,0 +1,115 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <CheckBox
+            android:id="@+id/enableDefaultReminderCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enable Default Reminder"
+            android:layout_marginTop="8dp" />
+
+
+        <CheckBox
+            android:id="@+id/notificationStatusCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enable Notification"
+            android:layout_marginBottom="8dp" />
+
+
+        <!-- Notification Selection Menu -->
+        <TextView
+            android:id="@+id/notificationTypeTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notification Type"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp" />
+
+        <Spinner
+            android:id="@+id/notificationTypeSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/notification_types" />
+
+        <!-- Custom Notification Time -->
+        <LinearLayout
+            android:id="@+id/customNotificationSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/customNotificationTimeField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Custom Notification Time (e.g., 2024-12-20 10:00)"
+                android:inputType="datetime" />
+
+            <Button
+                android:id="@+id/customNotificationTimePickerButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pick Date and Time" />
+
+            <!-- Snooze Section -->
+            <CheckBox
+                android:id="@+id/enableSnoozeCheckbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enable Snooze"
+                android:layout_marginTop="16dp" />
+
+            <LinearLayout
+                android:id="@+id/snoozeOptionsSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Snooze Duration"
+                    android:layout_marginTop="8dp" />
+
+                <Spinner
+                    android:id="@+id/snoozeDurationSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:entries="@array/snooze_durations" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Predefined Options -->
+        <LinearLayout
+            android:id="@+id/predefinedOptionsSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <Spinner
+                android:id="@+id/predefinedOptionsSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/predefined_options" />
+
+            <EditText
+                android:id="@+id/predefinedOptionsValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter hours/days" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

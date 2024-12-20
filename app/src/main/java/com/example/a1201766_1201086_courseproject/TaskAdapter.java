@@ -16,18 +16,26 @@ public class TaskAdapter extends BaseTaskAdapter<Task> {
         return R.layout.item_task;
     }
 
-    // Helper method to flatten Map<String, List<Task>> into List<Task>
     private static List<Task> flattenTasks(Map<String, List<Task>> groupedTasks) {
         List<Task> allTasks = new ArrayList<>();
-        for (List<Task> tasks : groupedTasks.values()) {
+        groupedTasks.forEach((date, tasks) -> {
+            tasks.forEach(task -> {
+                System.out.println("Flattening task: " + task.getTitle() + " | Date: " + date);
+            });
             allTasks.addAll(tasks);
-        }
+        });
         return allTasks;
     }
+
 
     public void updateGroupedTasks(Map<String, List<Task>> newGroupedTasks) {
         List<Task> updatedTasks = flattenTasks(newGroupedTasks);
         updateTaskList(updatedTasks); // Use BaseTaskAdapter's method to update the list
+        notifyDataSetChanged(); // Notify RecyclerView to refresh the UI
+        System.out.println("TaskAdapter: Updated grouped tasks. Total tasks: " + updatedTasks.size());
+        updatedTasks.forEach(task ->
+                System.out.println("Task: " + task.getTitle() + " | Due Date: " + task.getDueDate() + " | Priority: " + task.getPriority())
+        );
     }
 
 }
