@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="16dp"
+    android:layout_margin="16dp"
+    app:cardCornerRadius="20dp"
     app:cardElevation="8dp">
 
     <LinearLayout
@@ -17,68 +18,88 @@
         <!-- Task Title -->
         <TextView
             android:id="@+id/taskTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Task Title"
             android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textColor="@color/black" />
 
         <!-- Task Description -->
         <TextView
             android:id="@+id/taskDescription"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Task Description"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp" />
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/black" />
 
         <!-- Task Due Time -->
         <TextView
             android:id="@+id/taskDueTime"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Due: 10:00 AM"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp" />
+            android:textSize="16sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/black" />
 
-        <!-- Action Buttons -->
+        <!-- Action Buttons and Spinner -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="12dp">
 
+            <!-- Edit Button -->
             <TextView
                 android:id="@+id/editButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="Edit"
-                android:textColor="#00796B"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/black"
                 android:padding="8dp" />
 
-            <TextView
-                android:id="@+id/markCompleteButton"
-                android:layout_width="wrap_content"
+            <!-- Status Spinner -->
+            <Spinner
+                android:id="@+id/statusSpinner"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Complete"
-                android:textColor="#00796B"
-                android:padding="8dp" />
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:textColor="@color/black" />
 
+            <!-- Share Button -->
             <TextView
                 android:id="@+id/shareButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="Share"
-                android:textColor="#00796B"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/black"
                 android:padding="8dp" />
 
+            <!-- Delete Button -->
             <TextView
                 android:id="@+id/deleteButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="Delete"
-                android:textColor="#D32F2F"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:textSize="16sp"
                 android:padding="8dp" />
+
         </LinearLayout>
 
     </LinearLayout>

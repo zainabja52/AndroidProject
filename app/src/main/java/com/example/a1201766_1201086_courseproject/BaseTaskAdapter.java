@@ -6,7 +6,10 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,7 +56,7 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Task task = taskList.get(position);
+        Task task = taskList.get(holder.getAdapterPosition());
 
         holder.taskTitle.setText(task.getTitle());
         holder.taskDescription.setText(task.getDescription());
@@ -66,13 +69,44 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         // Edit task
         holder.editButton.setOnClickListener(v -> editTask(task, position));
 
-        // Mark task as complete
-        holder.markCompleteButton.setOnClickListener(v -> {
-            task.setStatus("completed");
-            taskDatabaseHelper.updateTaskStatus(task.getId(), "completed");
-            Toast.makeText(context, "Task marked as completed", Toast.LENGTH_SHORT).show();
-            notifyItemChanged(position);
+        // Populate status spinner
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                context,
+                R.array.status_options,
+                android.R.layout.simple_spinner_item
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        holder.statusSpinner.setAdapter(adapter);
+
+        int spinnerPosition = adapter.getPosition(task.getStatus());
+        //         int spinnerPosition = task.getStatus().equalsIgnoreCase("completed") ? 1 : 0;
+        holder.statusSpinner.setSelection(spinnerPosition);
+
+
+        // Handle status changes
+        holder.statusSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                String selectedStatus = parent.getItemAtPosition(pos).toString();
+                if (!selectedStatus.equalsIgnoreCase(task.getStatus())) {
+                    task.setStatus(selectedStatus);
+                    boolean updated = taskDatabaseHelper.updateTaskStatus(task.getId(), selectedStatus);
+                    if (updated) {
+                        Toast.makeText(context, "Task status updated to " + selectedStatus, Toast.LENGTH_SHORT).show();
+                        notifyItemChanged(holder.getAdapterPosition());
+                    } else {
+                        Toast.makeText(context, "Failed to update task status", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
         });
+
+
 
         // Share task
         holder.shareButton.setOnClickListener(v -> shareTaskViaEmail(task));
@@ -85,6 +119,8 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
             notifyItemRemoved(position);
         });
     }
+
+
 
     @Override
     public int getItemCount() {
@@ -114,6 +150,7 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         EditText editDescription = view.findViewById(R.id.editDescription);
         EditText editDueDate = view.findViewById(R.id.editDueDate);
         EditText editDueTime = view.findViewById(R.id.editDueTime);
+        Spinner prioritySpinner = view.findViewById(R.id.editPrioritySpinner);
 
         editTitle.setText(task.getTitle());
         editDescription.setText(task.getDescription());
@@ -124,12 +161,18 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
             editDueTime.setText(dueDateParts[1]);
         }
 
+        ArrayAdapter<CharSequence> priorityAdapter = ArrayAdapter.createFromResource(context, R.array.priority_options, android.R.layout.simple_spinner_item);
+        priorityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        prioritySpinner.setAdapter(priorityAdapter);
+        prioritySpinner.setSelection(getPriorityIndex(task.getPriority()));
+
         builder.setTitle("Edit Task")
                 .setPositiveButton("Update", (dialog, which) -> {
                     String updatedTitle = editTitle.getText().toString().trim();
                     String updatedDescription = editDescription.getText().toString().trim();
                     String updatedDueDate = editDueDate.getText().toString().trim();
                     String updatedDueTime = editDueTime.getText().toString().trim();
+                    String updatedPriority = prioritySpinner.getSelectedItem().toString();
 
                     if (updatedTitle.isEmpty() || updatedDescription.isEmpty() || updatedDueDate.isEmpty() || updatedDueTime.isEmpty()) {
                         Toast.makeText(context, "All fields are required!", Toast.LENGTH_SHORT).show();
@@ -156,6 +199,8 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
                         task.setTitle(updatedTitle);
                         task.setDescription(updatedDescription);
                         task.setDueDate(updatedDueDateTime);
+                        task.setPriority(updatedPriority);
+
                         if (!updatedDueDate.equals(getTodayDate())) {
                             taskList.remove(task);
                             notifyItemRemoved(position);
@@ -170,6 +215,19 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .create()
                 .show();
+    }
+
+    private int getPriorityIndex(String priority) {
+        switch (priority.toLowerCase()) {
+            case "high":
+                return 0;
+            case "medium":
+                return 1;
+            case "low":
+                return 2;
+            default:
+                return 1; // Default to medium
+        }
     }
 
     private boolean isValidDate(String date) {
@@ -217,6 +275,7 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         TextView taskTitle, taskDescription, taskDueTime;
         TextView editButton, markCompleteButton, shareButton, deleteButton;
         CardView cardView;
+        Spinner statusSpinner;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -224,9 +283,9 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
             taskTitle = itemView.findViewById(R.id.taskTitle);
             taskDescription = itemView.findViewById(R.id.taskDescription);
             taskDueTime = itemView.findViewById(R.id.taskDueTime);
+            statusSpinner = itemView.findViewById(R.id.statusSpinner);
 
             editButton = itemView.findViewById(R.id.editButton);
-            markCompleteButton = itemView.findViewById(R.id.markCompleteButton);
             shareButton = itemView.findViewById(R.id.shareButton);
             deleteButton = itemView.findViewById(R.id.deleteButton);
         }

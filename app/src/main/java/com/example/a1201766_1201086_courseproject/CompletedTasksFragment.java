@@ -50,13 +50,13 @@ public class CompletedTasksFragment extends Fragment {
         return view;
     }
 
-    private void loadCompletedTasks() {
+    public void loadCompletedTasks() {
         Cursor cursor = taskDatabaseHelper.getCompletedTasksGroupedByDate();
 
         groupedTasks.clear(); // Clear previous data
 
         // Group tasks by due_date
-        while (cursor.moveToNext()) {
+        while (cursor != null && cursor.moveToNext()) {
             String dueDate = cursor.getString(cursor.getColumnIndexOrThrow("due_date"));
             Task task = new Task(
                     cursor.getInt(cursor.getColumnIndexOrThrow("id")),
@@ -78,7 +78,7 @@ public class CompletedTasksFragment extends Fragment {
         dateKeys.sort(String::compareTo);
 
         // Bind grouped tasks to RecyclerView
-        taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper);
+        taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,null,this);
         recyclerView.setAdapter(taskAdapter);
     }
 

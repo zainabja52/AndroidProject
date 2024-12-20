@@ -51,7 +51,7 @@ public class AllTasksFragment extends Fragment {
 
         loadTasks();
 
-        taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper);
+        taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,this,null);
         recyclerView.setAdapter(taskAdapter);
 
         searchBar.addTextChangedListener(new TextWatcher() {
@@ -73,7 +73,7 @@ public class AllTasksFragment extends Fragment {
     }
 
 
-    private void loadTasks() {
+    public void loadTasks() {
         SharedPreferences preferences = getActivity().getSharedPreferences("USER_PREF", Context.MODE_PRIVATE);
         String userEmail = preferences.getString("email", ""); // Get user email
         Cursor cursor = taskDatabaseHelper.getAllTasks(userEmail);
@@ -81,7 +81,7 @@ public class AllTasksFragment extends Fragment {
         groupedTasks.clear(); // Clear previous data
         taskList.clear(); // Clear previous task list
 
-        while (cursor.moveToNext()) {
+        while (cursor != null && cursor.moveToNext()) {
             String dueDate = cursor.getString(cursor.getColumnIndexOrThrow("due_date"));
             Task task = new Task(
                     cursor.getInt(cursor.getColumnIndexOrThrow("id")),
@@ -107,7 +107,7 @@ public class AllTasksFragment extends Fragment {
         dateKeys.sort(String::compareTo); // Sort dates chronologically
 
         // Set the adapter
-        TaskAdapter taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper);
+        TaskAdapter taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,this,null);
         recyclerView.setAdapter(taskAdapter);
 
         // Set up the search bar
