@@ -1,6 +1,9 @@
 package com.example.a1201766_1201086_courseproject;
 
 import android.content.Context;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -24,21 +27,47 @@ public class TodayTaskAdapter extends BaseTaskAdapter<Task> {
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         super.onBindViewHolder(holder, position);
 
-        holder.markCompleteButton.setOnClickListener(v -> {
-            Task task = getTaskList().get(position);
-            task.setStatus("completed");
+        Task task = getTaskList().get(holder.getAdapterPosition());
 
-            // Update the task status in the database
-            boolean updated = taskDatabaseHelper.updateTaskStatus(task.getId(), "completed");
+        // Set up Spinner for status options
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                context,
+                R.array.status_options,
+                android.R.layout.simple_spinner_item
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        holder.statusSpinner.setAdapter(adapter);
 
-            if (updated) {
-                Toast.makeText(context, "Task marked as completed", Toast.LENGTH_SHORT).show();
-                notifyItemChanged(position);
+        // Set current status in the Spinner
+        int spinnerPosition = task.getStatus().equalsIgnoreCase("completed") ? 1 : 0;
+        holder.statusSpinner.setSelection(spinnerPosition);
 
-                // Trigger congratulatory check
-                if (fragment != null) {
-                    fragment.checkAndShowCongratulations();
+        // Handle status changes dynamically
+        holder.statusSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                String selectedStatus = parent.getItemAtPosition(pos).toString();
+                if (!selectedStatus.equalsIgnoreCase(task.getStatus())) {
+                    task.setStatus(selectedStatus);
+                    boolean updated = taskDatabaseHelper.updateTaskStatus(task.getId(), selectedStatus);
+
+                    if (updated) {
+                        Toast.makeText(context, "Task status updated to " + selectedStatus, Toast.LENGTH_SHORT).show();
+                        notifyItemChanged(holder.getAdapterPosition());
+
+                        // Trigger congratulatory check if all tasks are completed
+                        if (fragment != null) {
+                            fragment.checkAndShowCongratulations();
+                        }
+                    } else {
+                        Toast.makeText(context, "Failed to update task status", Toast.LENGTH_SHORT).show();
+                    }
                 }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
             }
         });
     }

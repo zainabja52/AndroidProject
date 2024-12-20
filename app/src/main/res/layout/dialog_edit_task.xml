@@ -7,21 +7,29 @@
     <EditText
         android:id="@+id/editTitle"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:background="@drawable/custom_edittext"
+        android:layout_height="50dp"
         android:hint="Task Title"
+        android:padding="10dp"
         android:textColor="@android:color/black" />
 
     <EditText
         android:id="@+id/editDescription"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/custom_edittext"
+        android:layout_height="50dp"
+        android:padding="10dp"
         android:hint="Task Description"
         android:textColor="@android:color/black" />
 
     <EditText
         android:id="@+id/editDueDate"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/custom_edittext"
+        android:layout_height="50dp"
+        android:padding="10dp"
         android:hint="Due Date (yyyy-MM-dd)"
         android:inputType="date"
         android:textColor="@android:color/black" />
@@ -29,8 +37,21 @@
     <EditText
         android:id="@+id/editDueTime"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/custom_edittext"
+        android:layout_height="50dp"
         android:hint="Due Time (HH:mm)"
         android:inputType="time"
+        android:padding="10dp"
         android:textColor="@android:color/black" />
+
+    <Spinner
+        android:id="@+id/editPrioritySpinner"
+        android:layout_width="match_parent"
+        android:background="@drawable/custom_edittext"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:layout_marginTop="8dp" />
+
+
 </LinearLayout>

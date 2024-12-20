@@ -55,7 +55,7 @@ public class AllTasksFragment extends Fragment {
         groupedTasks = new HashMap<>();
 
 
-        taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper);
+        taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,this,null);
         recyclerView.setAdapter(taskAdapter);
 
         loadTasks();
@@ -81,7 +81,7 @@ public class AllTasksFragment extends Fragment {
     }
 
 
-    private void loadTasks() {
+    public void loadTasks() {
         SharedPreferences preferences = getActivity().getSharedPreferences("USER_PREF", Context.MODE_PRIVATE);
         String userEmail = preferences.getString("email", "");
         Cursor cursor = taskDatabaseHelper.getAllTasks(userEmail);
@@ -89,7 +89,7 @@ public class AllTasksFragment extends Fragment {
         groupedTasks.clear();
         taskList.clear();
 
-        while (cursor.moveToNext()) {
+        while (cursor != null && cursor.moveToNext()) {
             String dueDate = cursor.getString(cursor.getColumnIndexOrThrow("due_date"));
             Task task = new Task(
                     cursor.getInt(cursor.getColumnIndexOrThrow("id")),
@@ -115,6 +115,7 @@ public class AllTasksFragment extends Fragment {
         groupedTasks = new TreeMap<>(groupedTasks);
         groupedTasks.forEach((date, tasks) -> tasks.sort((task1, task2) -> task1.getDueDate().compareTo(task2.getDueDate())));
 
+
         getActivity().runOnUiThread(() -> {
             taskAdapter.updateGroupedTasks(groupedTasks);
         });
@@ -123,6 +124,10 @@ public class AllTasksFragment extends Fragment {
             System.out.println("Date: " + date);
             tasks.forEach(task -> System.out.println("  Task: " + task.getTitle() + " | Time: " + task.getDueDate()));
         });
+
+        // Set the adapter
+        TaskAdapter taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,this,null);
+        recyclerView.setAdapter(taskAdapter);
 
     }
 
