@@ -12,7 +12,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.database.Cursor;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -37,6 +39,7 @@ public class AllTasksFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_all_tasks, container, false);
+        Button importButton = view.findViewById(R.id.button_import_tasks);
 
         taskDatabaseHelper = new TaskDatabaseHelper(getContext());
         recyclerView = view.findViewById(R.id.recyclerViewAllTasks);
@@ -64,7 +67,7 @@ public class AllTasksFragment extends Fragment {
             public void afterTextChanged(Editable s) { }
         });
 
-
+        importButton.setOnClickListener(v -> fetchTasksFromAPI("https://mocki.io/v1/fd97a2bd-1c26-43d0-8841-e8d8808f49d0"));
 
         return view;
     }
@@ -146,5 +149,32 @@ public class AllTasksFragment extends Fragment {
         // Update the adapter with the filtered tasks
         taskAdapter.updateGroupedTasks(filteredGroupedTasks);
     }
+
+    private void fetchTasksFromAPI(String apiURL) {
+        SharedPreferences preferences = getActivity().getSharedPreferences("USER_PREF", Context.MODE_PRIVATE);
+        String userEmail = preferences.getString("email", ""); // Get the current user's email
+
+        ConnectionAsyncTask task = new ConnectionAsyncTask(tasks -> {
+            if (tasks != null) {
+                for (Task importedTask : tasks) {
+                    taskDatabaseHelper.insertTask(
+                            userEmail, // Pass the user's email
+                            importedTask.getTitle(),
+                            importedTask.getDescription(),
+                            importedTask.getDueDate(),
+                            importedTask.getPriority(),
+                            importedTask.getStatus(),
+                            importedTask.getReminder()
+                    );
+                }
+                Toast.makeText(getContext(), "Tasks Imported Successfully!", Toast.LENGTH_SHORT).show();
+                loadTasks(); // Reload tasks after import
+            } else {
+                Toast.makeText(getContext(), "Failed to fetch tasks.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        task.execute(apiURL);
+    }
+
 
 }

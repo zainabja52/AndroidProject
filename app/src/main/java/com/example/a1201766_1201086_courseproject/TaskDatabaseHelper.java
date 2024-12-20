@@ -95,8 +95,8 @@ public class TaskDatabaseHelper extends SQLiteOpenHelper {
     public boolean updateTaskStatus(int id, String status) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(COL_STATUS, status);
-        int result = db.update(TABLE_NAME, values, COL_ID + "=?", new String[]{String.valueOf(id)});
+        values.put("status", status);
+        int result = db.update("tasks", values, "id = ?", new String[]{String.valueOf(id)});
         return result > 0;
     }
 

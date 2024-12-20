@@ -16,6 +16,15 @@
         android:padding="10dp"
         android:background="@drawable/custom_edittext" />
 
+    <Button
+        android:id="@+id/button_import_tasks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Import Tasks"
+        android:backgroundTint="@color/button_color"
+        android:textColor="@color/button_text_color"
+        android:layout_marginVertical="10dp"/>
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:padding="10dp"

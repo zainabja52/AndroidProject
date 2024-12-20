@@ -71,9 +71,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
-
         signUpButton.setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, SignupActivity.class);
             startActivity(intent);

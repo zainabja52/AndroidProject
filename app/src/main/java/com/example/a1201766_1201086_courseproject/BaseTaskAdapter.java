@@ -21,9 +21,9 @@ import java.util.Random;
 
 public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapter<BaseTaskAdapter.ViewHolder> {
 
-    private final List<Task> taskList;
-    private final TaskDatabaseHelper taskDatabaseHelper;
-    private final Context context;
+    protected final List<Task> taskList;
+    protected final TaskDatabaseHelper taskDatabaseHelper;
+    protected final Context context;
 
     private final int[] colorPalette = {
             0xFFF5D6C3,

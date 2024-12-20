@@ -9,6 +9,15 @@ public class Task {
     private String status;
     private String reminder;
 
+    public Task(){
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.dueDate = dueDate;
+        this.priority = priority;
+        this.status = status;
+        this.reminder = reminder;
+    }
     // Constructor
     public Task(int id, String title, String description, String dueDate, String priority, String status, String reminder) {
         this.id = id;
@@ -44,8 +53,7 @@ public class Task {
         this.reminder = reminder;
     }
 
-    public void setStatus(String completed) {
-    }
+    public void setStatus(String status) {this.status = status;}
 
     // Getters
     public int getId() { return id; }

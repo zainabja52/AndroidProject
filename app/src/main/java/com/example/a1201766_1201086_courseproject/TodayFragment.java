@@ -56,7 +56,7 @@ public class TodayFragment extends Fragment {
         loadTodayTasks();
 
         // Set up adapter
-        taskAdapter = new TodayTaskAdapter(getContext(), todayTasks, taskDatabaseHelper);
+        taskAdapter = new TodayTaskAdapter(getContext(), todayTasks, taskDatabaseHelper,this);
         recyclerView.setAdapter(taskAdapter);
 
         // Set up search bar
@@ -135,7 +135,7 @@ public class TodayFragment extends Fragment {
         taskAdapter.updateTaskList(filteredTasks);
     }
 
-    private void checkAndShowCongratulations() {
+    void checkAndShowCongratulations() {
         boolean allCompleted = true;
 
         for (Task task : todayTasks) {
@@ -156,7 +156,7 @@ public class TodayFragment extends Fragment {
     }
 
 
-    private void showCongratulations() {
+    public void showCongratulations() {
         // Toast message for quick feedback
         Toast.makeText(getContext(), "Congratulations! All tasks for today are completed!", Toast.LENGTH_LONG).show();
 
