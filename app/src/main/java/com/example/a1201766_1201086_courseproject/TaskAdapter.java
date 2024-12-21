@@ -10,12 +10,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class TaskAdapter extends BaseTaskAdapter<Task> {
-    private AllTasksFragment allTasksFragment; // Reference to AllTasksFragment
-    private CompletedTasksFragment completedTasksFragment; // Reference to CompletedTasksFragment
+    private AllTasksFragment allTasksFragment;
+    private CompletedTasksFragment completedTasksFragment;
 
     public TaskAdapter(Context context, Map<String, List<Task>> groupedTasks, TaskDatabaseHelper taskDatabaseHelper,
                        AllTasksFragment allTasksFragment, CompletedTasksFragment completedTasksFragment) {
@@ -43,12 +44,9 @@ public class TaskAdapter extends BaseTaskAdapter<Task> {
 
     public void updateGroupedTasks(Map<String, List<Task>> newGroupedTasks) {
         List<Task> updatedTasks = flattenTasks(newGroupedTasks);
-        updateTaskList(updatedTasks); // Use BaseTaskAdapter's method to update the list
-        notifyDataSetChanged(); // Notify RecyclerView to refresh the UI
+        updateTaskList(updatedTasks);
         System.out.println("TaskAdapter: Updated grouped tasks. Total tasks: " + updatedTasks.size());
-        updatedTasks.forEach(task ->
-                System.out.println("Task: " + task.getTitle() + " | Due Date: " + task.getDueDate() + " | Priority: " + task.getPriority())
-        );
+        notifyDataSetChanged();
     }
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
@@ -56,29 +54,38 @@ public class TaskAdapter extends BaseTaskAdapter<Task> {
 
         Task task = getTaskList().get(holder.getAdapterPosition());
 
-        // Set up Spinner for status options
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+
+        ArrayList<String> statusOptions = new ArrayList<>();
+        statusOptions.add("pending");
+        statusOptions.add("completed");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 context,
-                R.array.status_options,
-                android.R.layout.simple_spinner_item
+                android.R.layout.simple_spinner_item,
+                statusOptions
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         holder.statusSpinner.setAdapter(adapter);
 
-        // Validate task status and set spinner position
+        Log.d("TaskAdapter", "Spinner adapter set with options: " + Arrays.toString(context.getResources().getStringArray(R.array.status_options)));
+
+
         String status = task.getStatus();
         if (status == null || status.isEmpty()) {
-            status = "pending"; // Default to a valid value
+            status = "pending";
+        } else {
+            status = status.toLowerCase();
         }
 
         int spinnerPosition = adapter.getPosition(status);
-        if (spinnerPosition != AdapterView.INVALID_POSITION) {
-            holder.statusSpinner.setSelection(spinnerPosition);
-        } else {
+        if (spinnerPosition == AdapterView.INVALID_POSITION) {
             Log.e("TaskAdapter", "Invalid status: " + status + " for Task ID: " + task.getId());
+            spinnerPosition = 0;
         }
+        holder.statusSpinner.setSelection(spinnerPosition);
 
-        // Handle status changes dynamically
+
+
         holder.statusSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
@@ -89,9 +96,10 @@ public class TaskAdapter extends BaseTaskAdapter<Task> {
 
                     if (updated) {
                         Toast.makeText(context, "Task status updated to " + selectedStatus, Toast.LENGTH_SHORT).show();
+
+                        taskList.set(holder.getAdapterPosition(), task);
                         notifyItemChanged(holder.getAdapterPosition());
 
-                        // Trigger updates in AllTasksFragment and CompletedTasksFragment
                         if (allTasksFragment != null) {
                             allTasksFragment.loadTasks();
                         }
@@ -109,7 +117,15 @@ public class TaskAdapter extends BaseTaskAdapter<Task> {
             public void onNothingSelected(AdapterView<?> parent) {
                 // Do nothing
             }
+
         });
+
+    }
+    private String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
     }
 
 }

@@ -42,11 +42,12 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
     protected final Context context;
 
     private final int[] colorPalette = {
-            0xFFF5D6C3,
-            0xFFF8B6AD,
-            0xFFC7745E,
-            0xFF8A9C6B,
+            0xFFF7E0D1,
+            0xFFFAC8B7,
+            0xFFD99876,
+            0xFFA1B187,
     };
+
 
     public BaseTaskAdapter(Context context, List<Task> taskList, TaskDatabaseHelper taskDatabaseHelper) {
         this.context = context;
@@ -75,16 +76,32 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         holder.taskDescription.setText(task.getDescription());
         holder.taskDueTime.setText(formatTime(task.getDueDate()));
 
-        // Assign a random color for the card background
         int randomColor = colorPalette[new Random().nextInt(colorPalette.length)];
         holder.cardView.setCardBackgroundColor(randomColor);
 
-        holder.notificationIcon.setOnClickListener(v -> showNotificationDialog(task));
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        try {
+            Date dueDate = sdf.parse(task.getDueDate());
+            if (dueDate != null && dueDate.before(new Date())) {
+                // Disable notification icon if the due date has passed
+                holder.notificationIcon.setEnabled(false);
+                holder.notificationIcon.setAlpha(0.5f); // Visually indicate that it's disabled
+                holder.notificationIcon.setOnClickListener(v ->
+                        Toast.makeText(context, "Cannot set notifications for overdue tasks.", Toast.LENGTH_SHORT).show()
+                );
+            } else {
+                // Enable notification icon if the due date is in the future
+                holder.notificationIcon.setEnabled(true);
+                holder.notificationIcon.setAlpha(1.0f); // Restore normal appearance
+                holder.notificationIcon.setOnClickListener(v -> showNotificationDialog(task, task.getDefaultReminderEnabled()));
+            }
+        } catch (Exception e) {
+            Log.e("onBindViewHolder", "Invalid due date format for task: " + task.getTitle(), e);
+        }
 
-        // Edit task
         holder.editButton.setOnClickListener(v -> editTask(task, position));
 
-        // Populate status spinner
+
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 context,
                 R.array.status_options,
@@ -94,11 +111,13 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         holder.statusSpinner.setAdapter(adapter);
 
         int spinnerPosition = adapter.getPosition(task.getStatus());
-        //         int spinnerPosition = task.getStatus().equalsIgnoreCase("completed") ? 1 : 0;
+        if (spinnerPosition == AdapterView.INVALID_POSITION) {
+            Log.e("Status Spinner", "Invalid status: " + task.getStatus());
+            spinnerPosition = 0;
+        }
         holder.statusSpinner.setSelection(spinnerPosition);
 
 
-        // Handle status changes
         holder.statusSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
@@ -120,8 +139,6 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
                 // Do nothing
             }
         });
-
-
 
         // Share task
         holder.shareButton.setOnClickListener(v -> shareTaskViaEmail(task));
@@ -153,7 +170,7 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         }
     }
 
-    private void showNotificationDialog(Task task) {
+    private void showNotificationDialog(Task task, boolean defaultReminderEnabled) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Notification Settings");
 
@@ -171,6 +188,7 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         Spinner predefinedOptionsSpinner = dialogView.findViewById(R.id.predefinedOptionsSpinner);
         EditText predefinedOptionsValue = dialogView.findViewById(R.id.predefinedOptionsValue);
 
+
         CheckBox enableSnoozeCheckbox = dialogView.findViewById(R.id.enableSnoozeCheckbox);
         LinearLayout snoozeOptionsSection = dialogView.findViewById(R.id.snoozeOptionsSection);
         Spinner snoozeDurationSpinner = dialogView.findViewById(R.id.snoozeDurationSpinner);
@@ -179,13 +197,38 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
         customNotificationTimeField.setText(task.getCustomNotificationTime());
         snoozeOptionsSection.setVisibility(View.GONE);
 
-        enableDefaultReminderCheckbox.setChecked(task.getDefaultReminderEnabled());
+        enableDefaultReminderCheckbox.setChecked(defaultReminderEnabled);
         notificationStatusCheckbox.setChecked(task.getReminder() != null && !task.getReminder().isEmpty());
         customNotificationTimeField.setText(task.getCustomNotificationTime());
 
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        Date dueDate;
+        try {
+            dueDate = sdf.parse(task.getDueDate());
+        } catch (Exception e) {
+            Toast.makeText(context, "Invalid due date format.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        boolean isDueDatePassed = dueDate != null && dueDate.before(new Date());
+
+        if (isDueDatePassed) {
+            enableDefaultReminderCheckbox.setEnabled(false);
+            notificationStatusCheckbox.setEnabled(false);
+            customNotificationTimeField.setEnabled(false);
+            customNotificationTimePickerButton.setEnabled(false);
+            predefinedOptionsSpinner.setEnabled(false);
+            predefinedOptionsValue.setEnabled(false);
+            enableSnoozeCheckbox.setEnabled(false);
+            snoozeOptionsSection.setVisibility(View.GONE);
+
+            Toast.makeText(context, "The due date for this task has passed. Notifications cannot be set.", Toast.LENGTH_LONG).show();
+        }
 
         enableDefaultReminderCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             task.setDefaultReminderEnabled(isChecked);
+
+            taskDatabaseHelper.updateTaskDefaultReminderState(task.getTitle(), task.getDueDate(), isChecked);
+
             if (isChecked) {
                 long defaultReminderTime = ReminderReceiver.parseDateTimeToMillis(task.getDueDate(), task.getDueTime());
                 if (defaultReminderTime != -1) {
@@ -198,22 +241,7 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
                 ReminderReceiver.cancelNotification(context, task.getId());
                 Toast.makeText(context, "Default reminder disabled.", Toast.LENGTH_SHORT).show();
             }
-
-            taskDatabaseHelper.updateTask(
-                    task.getId(),
-                    task.getTitle(),
-                    task.getDescription(),
-                    task.getDueDate(),
-                    task.getPriority(),
-                    task.getStatus(),
-                    isChecked ? "reminder" : "",
-                    task.getCustomNotificationTime(),
-                    task.getSnoozeDuration(),
-                    isChecked
-            );
         });
-
-
 
         notificationStatusCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
@@ -653,7 +681,7 @@ public abstract class BaseTaskAdapter<T extends Task> extends RecyclerView.Adapt
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView taskTitle, taskDescription, taskDueTime;
-        TextView editButton, markCompleteButton, shareButton, deleteButton;
+        ImageView editButton, shareButton, deleteButton;
         ImageView notificationIcon;
         CardView cardView;
         Spinner statusSpinner;
