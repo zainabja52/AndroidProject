@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,7 +54,6 @@ public class AllTasksFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         taskList = new ArrayList<>();
         groupedTasks = new HashMap<>();
-
 
         taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,this,null);
         recyclerView.setAdapter(taskAdapter);
@@ -110,24 +110,12 @@ public class AllTasksFragment extends Fragment {
             groupedTasks.putIfAbsent(dueDate, new ArrayList<>());
             groupedTasks.get(dueDate).add(task);
         }
-        cursor.close();
-
-        groupedTasks = new TreeMap<>(groupedTasks);
-        groupedTasks.forEach((date, tasks) -> tasks.sort((task1, task2) -> task1.getDueDate().compareTo(task2.getDueDate())));
 
 
-        getActivity().runOnUiThread(() -> {
-            taskAdapter.updateGroupedTasks(groupedTasks);
-        });
-        System.out.println("Grouped tasks after load:");
-        groupedTasks.forEach((date, tasks) -> {
-            System.out.println("Date: " + date);
-            tasks.forEach(task -> System.out.println("  Task: " + task.getTitle() + " | Time: " + task.getDueDate()));
-        });
+        if (cursor != null) cursor.close();
 
-        // Set the adapter
-        TaskAdapter taskAdapter = new TaskAdapter(getContext(), groupedTasks, taskDatabaseHelper,this,null);
-        recyclerView.setAdapter(taskAdapter);
+        getActivity().runOnUiThread(() -> taskAdapter.updateGroupedTasks(groupedTasks));
+
 
     }
 
@@ -141,8 +129,7 @@ public class AllTasksFragment extends Fragment {
             return isAscending ? Integer.compare(priority1, priority2) : Integer.compare(priority2, priority1);
         }));
 
-
-        groupedTasks = new TreeMap<>(groupedTasks); // Ensure chronological grouping remains
+        groupedTasks = new TreeMap<>(groupedTasks);
 
         System.out.println("Grouped tasks after sorting:");
         groupedTasks.forEach((date, tasks) -> {
@@ -187,6 +174,14 @@ public class AllTasksFragment extends Fragment {
     }
 
     private void filterTasks(String query) {
+        Log.d("FilterTasks", "Query: " + query);
+
+        if (query == null || query.trim().isEmpty()) {
+            Log.d("FilterTasks", "Resetting to original groupedTasks.");
+            taskAdapter.updateGroupedTasks(groupedTasks);
+            return;
+        }
+
         Map<String, List<Task>> filteredGroupedTasks = new HashMap<>();
 
         for (Map.Entry<String, List<Task>> entry : groupedTasks.entrySet()) {
@@ -202,9 +197,15 @@ public class AllTasksFragment extends Fragment {
             }
         }
 
-        // Update the adapter with the filtered tasks
+        Log.d("FilterTasks", "FilteredGroupedTasks size: " + filteredGroupedTasks.size());
+        filteredGroupedTasks.forEach((date, tasks) -> {
+            Log.d("FilterTasks", "Date: " + date + ", Tasks: " + tasks.size());
+            tasks.forEach(task -> Log.d("FilterTasks", "Task: " + task.getTitle()));
+        });
+
         taskAdapter.updateGroupedTasks(filteredGroupedTasks);
     }
+
 
     private void fetchTasksFromAPI(String apiURL) {
         SharedPreferences preferences = getActivity().getSharedPreferences("USER_PREF", Context.MODE_PRIVATE);
@@ -231,7 +232,7 @@ public class AllTasksFragment extends Fragment {
                     }
                 }
                 Toast.makeText(getContext(), "Tasks Imported Successfully!", Toast.LENGTH_SHORT).show();
-                loadTasks(); // Reload tasks after import
+                loadTasks();
             } else {
                 Toast.makeText(getContext(), "Failed to fetch tasks.", Toast.LENGTH_SHORT).show();
             }

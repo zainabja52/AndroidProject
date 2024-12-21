@@ -23,13 +23,11 @@
         <item>30 minutes</item>
     </string-array>
 
-
     <string-array name="predefined_options">
         <item>Same Day</item>
         <item>Days Before</item>
         <item>Hours Before</item>
     </string-array>
-
 
     <string-array name="status_options">
         <item>pending</item>

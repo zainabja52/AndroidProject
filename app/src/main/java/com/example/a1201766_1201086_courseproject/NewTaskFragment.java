@@ -37,12 +37,10 @@ import java.util.Locale;
 import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 
-
 public class NewTaskFragment extends Fragment {
 
     private EditText taskTitleField, taskDescriptionField, dueDateField, dueTimeField, searchTaskField;
-    private Spinner prioritySpinner;
-    private CheckBox completionStatusCheckbox;
+    private Spinner prioritySpinner, statusSpinner;
     private Button saveTaskButton, deleteTaskButton, reminderButton, confirmDeleteButton;
     private TaskDatabaseHelper taskDatabaseHelper;
     private ListView taskListView;
@@ -50,7 +48,7 @@ public class NewTaskFragment extends Fragment {
     private TextView taskDetailsText;
     private String selectedTaskTitle, selectedTaskDate;
     private boolean isReminderSet = false;
-
+    private long tempReminderTime = -1;
 
 
     @Override
@@ -63,10 +61,11 @@ public class NewTaskFragment extends Fragment {
         dueDateField = view.findViewById(R.id.dueDateField);
         dueTimeField = view.findViewById(R.id.dueTimeField);
         prioritySpinner = view.findViewById(R.id.prioritySpinner);
-        completionStatusCheckbox = view.findViewById(R.id.completionStatusCheckbox);
+        statusSpinner = view.findViewById(R.id.statusSpinner);
         saveTaskButton = view.findViewById(R.id.saveTaskButton);
         deleteTaskButton = view.findViewById(R.id.deleteTaskButton);
         reminderButton = view.findViewById(R.id.reminderButton);
+
 
         searchCardView = view.findViewById(R.id.searchCardView);
         searchTaskField = view.findViewById(R.id.searchTaskField);
@@ -77,16 +76,24 @@ public class NewTaskFragment extends Fragment {
 
         taskDatabaseHelper = new TaskDatabaseHelper(getContext());
 
+            ArrayAdapter<CharSequence> priorityAdapter = ArrayAdapter.createFromResource(
+                    getContext(),
+                    R.array.priority_options,
+                    android.R.layout.simple_spinner_item
+            );
+            priorityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            prioritySpinner.setAdapter(priorityAdapter);
 
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                getContext(),
-                R.array.priority_options,
-                android.R.layout.simple_spinner_item
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        prioritySpinner.setAdapter(adapter);
+            ArrayAdapter<CharSequence> statusAdapter = ArrayAdapter.createFromResource(
+                    getContext(),
+                    R.array.status_options,
+                    android.R.layout.simple_spinner_item
+            );
+            statusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            statusSpinner.setAdapter(statusAdapter);
 
-        prioritySpinner.setSelection(1);
+            prioritySpinner.setSelection(1);
+            statusSpinner.setSelection(0);
 
         dueDateField.setOnClickListener(v -> showDatePickerDialog());
         dueTimeField.setOnClickListener(v -> showTimePickerDialog());
@@ -277,8 +284,9 @@ public class NewTaskFragment extends Fragment {
         if (priority == null) {
             priority = "Medium"; // Fallback if no selection
         }
-        String status = completionStatusCheckbox.isChecked() ? "completed" : "pending";
-        String reminder = reminderButton.isEnabled() ? "reminder" : "";
+        String status = (String) statusSpinner.getSelectedItem();
+        Log.d("NewTaskFragment", "Saving task with status: " + status);
+
 
         if (title.isEmpty() || description.isEmpty() || dueDate.isEmpty() || dueTime.isEmpty() || priority.isEmpty()) {
             Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
@@ -293,9 +301,17 @@ public class NewTaskFragment extends Fragment {
             return;
         }
 
-        boolean isInserted = taskDatabaseHelper.insertTask(userEmail, title, description, dueDate + " " + dueTime, priority, status, reminder, null, 0, true);
+        boolean isInserted = taskDatabaseHelper.insertTask(userEmail, title, description, dueDate + " " + dueTime, priority, status, isReminderSet ? "reminder" : "", null, 0, isReminderSet);
         if (isInserted) {
             Toast.makeText(getContext(), "Task saved successfully", Toast.LENGTH_SHORT).show();
+
+            if (isReminderSet && tempReminderTime > 0) {
+                scheduleNotification(title, "Task Reminder", tempReminderTime);
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+                String notificationTime = sdf.format(new Date(tempReminderTime));
+                Toast.makeText(getContext(), "You will be notified by " + notificationTime, Toast.LENGTH_LONG).show();
+            }
 
             //reset the fields
             taskTitleField.setText("");
@@ -303,8 +319,9 @@ public class NewTaskFragment extends Fragment {
             dueDateField.setText("");
             dueTimeField.setText("");
             prioritySpinner.setSelection(1);
-            completionStatusCheckbox.setChecked(false);
+            statusSpinner.setSelection(0);
             isReminderSet = false;
+            tempReminderTime = -1;
         } else {
             Toast.makeText(getContext(), "Failed to save task", Toast.LENGTH_SHORT).show();
         }
@@ -328,7 +345,7 @@ public class NewTaskFragment extends Fragment {
             dueDateField.setText("");
             dueTimeField.setText("");
             prioritySpinner.setSelection(1);
-            completionStatusCheckbox.setChecked(false);
+            statusSpinner.setSelection(0);
         } else {
             Toast.makeText(getContext(), "Failed to delete task. Task may not exist.", Toast.LENGTH_SHORT).show();
         }
@@ -336,28 +353,18 @@ public class NewTaskFragment extends Fragment {
 
 
     private void setReminder() {
-        String title = taskTitleField.getText().toString().trim();
         String dueDate = dueDateField.getText().toString().trim();
         String dueTime = dueTimeField.getText().toString().trim();
 
-        if (title.isEmpty() || dueDate.isEmpty() || dueTime.isEmpty()) {
-            Toast.makeText(getContext(), "Please fill in the task title, due date, and time", Toast.LENGTH_SHORT).show();
+        if (dueDate.isEmpty() || dueTime.isEmpty()) {
+            Toast.makeText(getContext(), "Please fill in the due date and time before setting a reminder.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Parse date and time into a timestamp
         long reminderTime = parseDateTimeToMillis(dueDate, dueTime);
-        if (reminderTime <= System.currentTimeMillis()) {
-            Toast.makeText(getContext(), "Reminder time must be in the future", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        scheduleNotification(title, "Task Reminder", reminderTime);
-
-        boolean isUpdated = taskDatabaseHelper.updateTaskReminder(title, dueDate + " " + dueTime, "reminder");
-        if (isUpdated) {
-            Toast.makeText(getContext(), "Reminder set successfully.", Toast.LENGTH_SHORT).show();
-        }
+        tempReminderTime = reminderTime;
+        isReminderSet = true;
+        Toast.makeText(getContext(), "Reminder set. Please save the task to finalize.", Toast.LENGTH_SHORT).show();
     }
 
     public static long parseDateTimeToMillis(String dueDate, String dueTime) {

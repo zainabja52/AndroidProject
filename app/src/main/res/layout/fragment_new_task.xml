@@ -93,13 +93,14 @@
                     android:padding="10dp"
                     android:entries="@array/priority_options" />
 
-                <CheckBox
-                    android:id="@+id/completionStatusCheckbox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="Completed"
-                    android:textColor="@color/header_text_color" />
+                <Spinner
+                    android:id="@+id/statusSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/custom_edittext"
+                    android:padding="10dp"
+                    android:entries="@array/status_options" />
 
                 <Button
                     android:id="@+id/reminderButton"
