@@ -35,10 +35,8 @@ This project is a comprehensive **Task Management Application** designed to simp
 
 ### 🛠️ **Programming Languages and Tools**
 
-<img align="left" alt="Java" width="50px" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/java/java-original.svg" />
-<img align="left" alt="Android Studio" width="50px" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/android/android-original.svg" />
-<img align="left" alt="SQLite" width="50px" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/sqlite/sqlite-original.svg" />
-<br><br>
+<img align="left" alt="Java" width="50px" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/java/java-original.svg" /> <img align="left" alt="Android Studio" width="50px" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/androidstudio/androidstudio-original.svg" /> <img align="left" alt="XML" width="50px" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/xml/xml-original.svg" /> <br><br>
+
 
 ---
 
