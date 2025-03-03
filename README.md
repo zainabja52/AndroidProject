@@ -86,14 +86,12 @@ To set up the project, follow these steps:
 ### 📸 **Screenshots**
 
 #### 🏠 **Home Screen**:
-<p align="center">
-  <img src="https://via.placeholder.com/500x300.png" width="600">
-</p>
+
+  ![home](https://github.com/user-attachments/assets/934d69cd-60f0-4704-ae9d-56bc5c547775)
 
 #### ➕ **Task Creation**:
-<p align="center">
-  <img src="https://via.placeholder.com/500x300.png" width="600">
-</p>
+
+  ![addtask](https://github.com/user-attachments/assets/5eb2962a-fa58-4736-b903-39c38129985d)
 
 ---
 
